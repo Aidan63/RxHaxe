@@ -25,13 +25,13 @@ class Timestamp<T> extends Observable<Timestamped<T>> {
 
         var timestamp_observer = Observer.create(
             function() {
-                observer.on_completed();
+                observer.onCompleted();
             },
             function(e:String) {
-                observer.on_error(e);
+                observer.onError(e);
             },
             function(v:T) {
-                observer.on_next(new Timestamped<T>(v, _scheduler.now()));
+                observer.onNext(new Timestamped<T>(v, _scheduler.now()));
             }
         );
 

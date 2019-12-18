@@ -39,13 +39,13 @@ class Merge<T> extends Observable<T> {
         var child_observer = Observer.create(
             function() {
                 var count = AtomicData.update_and_get(Utils.pred, child_counter);
-                stop_if_and_do((count == 0 && parent_completed), observer.on_completed);
+                stop_if_and_do((count == 0 && parent_completed), observer.onCompleted);
             },
             function(e:String) {
-                stop_if_and_do(true, (function() { observer.on_error(e);}));
+                stop_if_and_do(true, (function() { observer.onError(e);}));
             },
             function(v:T) {
-                if (!(AtomicData.get(is_stopped))) observer.on_next(v);
+                if (!(AtomicData.get(is_stopped))) observer.onNext(v);
             }
         );
 
@@ -53,9 +53,9 @@ class Merge<T> extends Observable<T> {
             function() {
                 parent_completed = true;
                 var count = AtomicData.get(child_counter);
-                stop_if_and_do((count == 0), observer.on_completed);
+                stop_if_and_do((count == 0), observer.onCompleted);
             },
-            observer.on_error,
+            observer.onError,
             function(observable:Observable<T>) {
                 if (!AtomicData.get(is_stopped)) {
                     AtomicData.update(Utils.succ, child_counter);

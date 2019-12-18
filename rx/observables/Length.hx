@@ -22,9 +22,9 @@ class Length<T> extends Observable<Int> {
         var counter = AtomicData.create(0);
         var length_observer = Observer.create(function() {
             var v = AtomicData.unsafe_get(counter);
-            observer.on_next(v);
-            observer.on_completed();
-        }, observer.on_error, function(v:T) {
+            observer.onNext(v);
+            observer.onCompleted();
+        }, observer.onError, function(v:T) {
             AtomicData.update(Utils.succ, counter);
         });
 

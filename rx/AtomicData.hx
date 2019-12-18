@@ -1,98 +1,94 @@
 package rx;
 
+import hx.concurrent.lock.RLock;
 
-class AtomicData<T> {
-    public var data:T;
-    public var mutex:Mutex ;
+class AtomicData<T>
+{
+    public var data : T;
 
-    public function new() {}
+    public final mutex : RLock;
 
-    public static function clone<T>(v:T):T {
-
-        return switch(Type.typeof(v)) {
-            case TNull:
-                return null;
-            case TInt, TFloat, TBool, TEnum(_), TFunction, TUnknown :
-                return v;
-
-            default: {
-                return Reflect.copy(v);
-            }
-        }
-
+    function new(_initial_value : T)
+    {
+        mutex = new RLock();
+        data  = _initial_value;
     }
 
-    static public function with_lock<T, B>(ad:AtomicData<T>, f:Void -> B):B {
-        ad.mutex.acquire();
-        var value = f();
-        ad.mutex.release();
+    public static function clone<T>(_v : T) : T
+    {
+        return switch Type.typeof(_v)
+        {
+            case TNull : null;
+            case TInt, TFloat, TBool, TEnum(_), TFunction, TUnknown : _v;
+            default : Reflect.copy(_v);
+        }
+    }
+
+    static public function with_lock<T, B>(_ad : AtomicData<T>, _f : () -> B) : B
+    {
+        _ad.mutex.acquire();
+
+        var value = _f();
+
+        _ad.mutex.release();
+
         return value;
     }
 
-    static public function create<T>(initial_value:T) {
+    static public function create<T>(_initial_value : T)
+        return new AtomicData<T>(_initial_value);
 
-        var t:AtomicData<T> = new AtomicData<T>();
-        t.data = initial_value;
-        t.mutex = new Mutex();
-        return t;
-    }
+    static public function get<T>(_ad : AtomicData<T>)
+        return with_lock(_ad, () -> _ad.data);
 
-    static public function get<T>(ad:AtomicData<T>) {
-        return with_lock(ad, (function() return ad.data));
-    }
+    static public function unsafe_get<T>(_ad : AtomicData<T>)
+        return _ad.data;
 
+    static public function set<T>(_value : T, _ad : AtomicData<T>)
+        return with_lock(_ad, () -> _ad.data = _value);
 
-    static public function unsafe_get<T>(ad:AtomicData<T>) return ad.data;
+    static public function unsafe_set<T>(_value : T, _ad : AtomicData<T>)
+        return _ad.data = _value;
 
-    static public function set<T>(value:T, ad:AtomicData<T>) return with_lock(ad, (function() return ad.data = value));
-
-    static public function unsafe_set<T>(value:T, ad:AtomicData<T>) return ad.data = value;
-
-    static public function get_and_set<T>(value:T, ad:AtomicData<T>)
-    return with_lock(ad, (function() {
-        var result = clone(ad.data);
-        ad.data = value;
-        return result;
-    }));
-
-    static public function update<T>(f:T -> T, ad:AtomicData<T>)return with_lock(ad, (function() return ad.data = f(ad.data)));
-
-    static public function update_and_get<T>(f:T -> T, ad:AtomicData<T>)
-    return with_lock(ad, (function() {
-        var result = f(ad.data);
-        ad.data = result;
-        return result;
-    }));
-
-    static public function compare_and_set<T>(compare_value:T, set_value:T, ad:AtomicData<T>) {
-        return with_lock(ad, (function() {
-            var result = clone(ad.data);
-            if (ad.data == compare_value) {
-                ad.data = set_value;
-
-            }
+    static public function get_and_set<T>(_value : T, _ad : AtomicData<T>)
+        return with_lock(_ad, () -> {
+            var result = clone(_ad.data);
+            _ad.data = _value;
             return result;
-        } ));
-    }
+        });
 
+    static public function update<T>(_f : (_in : T) -> T, _ad : AtomicData<T>)
+        return with_lock(_ad, () -> _ad.data = _f(_ad.data));
 
-    static public function update_if<T>(predicate:T -> Bool, update:T -> T, ad:AtomicData<T>) {
-        return with_lock(ad, (function() {
-            var result = clone(ad.data);
-            if (predicate(ad.data)) {
-                ad.data = update(ad.data);
-            }
+    static public function update_and_get<T>(_f : (_in : T) -> T, _ad : AtomicData<T>)
+        return with_lock(_ad, () -> {
+            var result = _f(_ad.data);
+            _ad.data = result;
             return result;
-        }));
+        });
 
-    }
+    static public function compare_and_set<T>(_compare_value : T, _set_value : T, _ad : AtomicData<T>)
+        return with_lock(_ad, () -> {
+            var result = clone(_ad.data);
+            if (_ad.data == _compare_value)
+            {
+                _ad.data = _set_value;
+            }
 
+            return result;
+        });
 
-    static public function synchronize<T, B>(f:T -> B, ad:AtomicData<T>) {
-        return with_lock(ad, (function() return f(ad.data)));
-    }
+    static public function update_if<T>(_predicate : (_in : T) -> Bool, _update : (_in : T) -> T, _ad : AtomicData<T>)
+        return with_lock(_ad, () -> {
+            var result = clone(_ad.data);
+            if (_predicate(_ad.data))
+            {
+                _ad.data = _update(_ad.data);
+            }
 
+            return result;
+        });
 
+    static public function synchronize<T, B>(_f : (_in : T) -> B, _ad : AtomicData<T>)
+        return with_lock(_ad, () -> _f(_ad.data));
 }
-
- 

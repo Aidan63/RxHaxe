@@ -1,9 +1,11 @@
 package rx;
+
 import haxe.Timer;
+import hx.concurrent.thread.Threads;
+import rx.Subscription;
 import rx.observers.IObserver;
 import rx.disposables.ISubscription;
-import rx.Subscription;
-import rx.Thread;
+
 class Utils {
 
     static public function try_finally<T>(thunk:Void -> T, finally:Void -> Void):T {
@@ -26,7 +28,7 @@ class Utils {
 
       static public function create_sleeping_action(action:Void -> Void, exec_time:Float, now:Void -> Float):Void -> ISubscription {
 
-            #if cpp
+            #if sys
               return function () {
                 var delay:Int = Math.floor((exec_time - now()));
                 if (delay > 0 ){
@@ -54,7 +56,7 @@ class Utils {
     }
 
     inline static public function current_thread_id() {
-        return Thread.current();
+        return Threads.current;
     }
 
     static public function pred(i) return i - 1;

@@ -42,7 +42,7 @@ class Throttle<T> extends Observable<T> {
                     return s.hasValue && s.id == currentid;
                 },
                 function(s:ThrottleState<T>) {
-                    observer.on_next(s.latestValue);
+                    observer.onNext(s.latestValue);
                     s.hasValue = false;
                     return s;
                 }, state);
@@ -54,13 +54,13 @@ class Throttle<T> extends Observable<T> {
                 cancelable.unsubscribe();
                 AtomicData.update(function(s:ThrottleState<T>) {
                     if (s.hasValue) {
-                        observer.on_next(s.latestValue);
+                        observer.onNext(s.latestValue);
                     }
                     s.hasValue = false;
                     s.id = s.id + 1;
                     return s;
                 }, state);
-                observer.on_completed();
+                observer.onCompleted();
             },
             function(e:String) {
                 //lock
@@ -70,7 +70,7 @@ class Throttle<T> extends Observable<T> {
                     s.id = s.id + 1;
                     return s;
                 }, state);
-                observer.on_error(e);
+                observer.onError(e);
             },
             function(value:T) {
                 var currentid:Float = 0;

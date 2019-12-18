@@ -21,10 +21,10 @@ class Skip<T> extends Observable<T> {
 
     override public function subscribe(observer:IObserver<T>):ISubscription {
         var counter = AtomicData.create(0);
-        var drop_observer = Observer.create(observer.on_completed, observer.on_error,
+        var drop_observer = Observer.create(observer.onCompleted, observer.onError,
         function(v:T) {
             var count = AtomicData.update_and_get(Utils.succ, counter);
-            if (count > n) observer.on_next(v);
+            if (count > n) observer.onNext(v);
         });
         return _source.subscribe(drop_observer);
     }

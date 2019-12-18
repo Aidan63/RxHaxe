@@ -39,15 +39,15 @@ class SkipUntil<T> extends Observable<T> {
         var skipUntil_observer = Observer.create(
             function() {
                 if (triggered)
-                    observer.on_completed();
+                    observer.onCompleted();
             },
             function(e:String) {
                 if (triggered)
-                    observer.on_error(e);
+                    observer.onError(e);
             },
             function(v:T) {
                 if (triggered)
-                    observer.on_next(v);
+                    observer.onNext(v);
             }
         );
         var sourceSubscription = _source.subscribe(skipUntil_observer);

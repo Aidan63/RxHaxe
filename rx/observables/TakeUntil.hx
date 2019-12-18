@@ -22,15 +22,15 @@ class TakeUntil<T> extends Observable<T> {
         var otherSubscription = SingleAssignment.create();
         var other_observer = Observer.create(
             function() {
-                observer.on_completed();
+                observer.onCompleted();
                 otherSubscription.unsubscribe();
             },
             function(e:String) {
-                observer.on_completed();
+                observer.onCompleted();
                 otherSubscription.unsubscribe();
             },
             function(v:T) {
-                observer.on_completed();
+                observer.onCompleted();
                 otherSubscription.unsubscribe();
             }
         );
@@ -38,13 +38,13 @@ class TakeUntil<T> extends Observable<T> {
         otherSubscription.set(_other.subscribe(other_observer));
         var takeUntil_observer = Observer.create(
             function() {
-                observer.on_completed();
+                observer.onCompleted();
             },
             function(e:String) {
-                observer.on_error(e);
+                observer.onError(e);
             },
             function(v:T) {
-                observer.on_next(v);
+                observer.onNext(v);
             }
         );
         var sourceSubscription = _source.subscribe(takeUntil_observer);

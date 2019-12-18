@@ -1,19 +1,24 @@
 package rx.observables;
-import rx.observables.IObservable;
+
 import rx.disposables.ISubscription;
 import rx.observers.IObserver;
 
-class Return<T> extends Observable<T> {
-    var v:T;
+class Return<T> extends Observable<T>
+{
+    final v : T;
 
-    public function new(v:T) {
+    public function new(_v : T)
+    {
         super();
-        this.v = v;
+
+        v = _v;
     }
 
-    override public function subscribe(observer:IObserver<T>):ISubscription {
-        observer.on_next(v);
-        observer.on_completed();
+    override public function subscribe(_observer : IObserver<T>) : ISubscription
+    {
+        _observer.onNext(v);
+        _observer.onCompleted();
+
         return Subscription.empty();
     }
 }

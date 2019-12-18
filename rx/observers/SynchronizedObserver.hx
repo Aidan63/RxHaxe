@@ -1,16 +1,18 @@
 package rx.observers;
+
 import rx.Utils;
 import rx.Core.RxObserver;
-import rx.Mutex;
+import hx.concurrent.lock.RLock;
+
 class SynchronizedObserver<T> implements IObserver<T> {
     /* Original implementation:
    * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Core/Reactive/Internal/SynchronizedObserver.cs
    */
-    var mutex:Mutex ;
+    var mutex:RLock;
     var observer:RxObserver<T>;
 
     public function new(?on_completed:Void -> Void, ?on_error:String -> Void, on_next:T -> Void) {
-        mutex = new Mutex();
+        mutex = new RLock();
         observer = { onCompleted:on_completed,
             onError:on_error,
             onNext:on_next };
@@ -23,21 +25,21 @@ class SynchronizedObserver<T> implements IObserver<T> {
         mutex.release();
     }
 
-    public function on_error(e:String) {
+    public function onError(e:String) {
         with_lock(observer.onError, e);
     }
 
-    public function on_next(x:T) {
+    public function onNext(x:T) {
         with_lock(observer.onNext, x);
     }
 
-    public function on_completed() {
+    public function onCompleted() {
         mutex.acquire();
         observer.onCompleted();
         mutex.release();
     }
 
     inline static public function create<T>(observer:IObserver<T>) {
-        return new SynchronizedObserver<T>(observer.on_completed, observer.on_error, observer.on_next);
+        return new SynchronizedObserver<T>(observer.onCompleted, observer.onError, observer.onNext);
     }
 }

@@ -22,17 +22,17 @@ class ElementAt<T> extends Observable<T> {
         var __subscription = SingleAssignment.create();
         var elementAt_observer = Observer.create(
             function() {
-                observer.on_completed();
+                observer.onCompleted();
             },
             function(e:String) {
-                observer.on_error(e);
+                observer.onError(e);
 
             },
             function(value:T) {
                 AtomicData.update_if(function(c:Int) return c == _index,
                 function(c:Int) {
-                    observer.on_next(value);
-                    observer.on_completed();
+                    observer.onNext(value);
+                    observer.onCompleted();
                     __subscription.unsubscribe();
                     return c;
                 },

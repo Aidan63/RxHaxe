@@ -23,8 +23,8 @@ class Scan<T, R> extends Observable<R> {
         var accumulation:Null<R> = null;
         var isFirst = true;
         var scan_observer = Observer.create(
-            observer.on_completed,
-            observer.on_error,
+            observer.onCompleted,
+            observer.onError,
             function(value:T) {
                 if (isFirst) {
                     isFirst = false;
@@ -33,7 +33,7 @@ class Scan<T, R> extends Observable<R> {
                 else {
                     accumulation = _accumulator(accumulation, value);
                 }
-                observer.on_next(accumulation);
+                observer.onNext(accumulation);
             }
         );
         return _source.subscribe(scan_observer);

@@ -28,14 +28,14 @@ class TakeLast<T> extends Observable<T> {
         var take_last_observer = Observer.create(function() {
             try {
                 for (iter in queue) {
-                    observer.on_next(iter) ;
+                    observer.onNext(iter) ;
                 }
-                observer.on_completed();
+                observer.onCompleted();
             } catch (e:String) {
-                observer.on_error(e);
+                observer.onError(e);
             }
         },
-        observer.on_error,
+        observer.onError,
         function(v:T) {
             if (n > 0) {
                 try {
@@ -45,7 +45,7 @@ class TakeLast<T> extends Observable<T> {
                         queue.shift();
                     }
                 } catch (e:String) {
-                    observer.on_error(e);
+                    observer.onError(e);
                     __unsubscribe.unsubscribe();
                 }
             }

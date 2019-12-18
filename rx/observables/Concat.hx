@@ -22,9 +22,9 @@ class ConcatAppend<T> extends Observable<T> {
             function() {
                 _unsubscribe.add(_source2.subscribe(observer));
             },
-            observer.on_error,
+            observer.onError,
             function(v:T) {
-                observer.on_next(v);
+                observer.onNext(v);
             }
         );
 

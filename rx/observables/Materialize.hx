@@ -20,13 +20,13 @@ class Materialize<T> extends Observable<Notification<T>> {
 
     override public function subscribe(observer:IObserver<Notification<T>>):ISubscription {
         var materialize_observer = Observer.create(function() {
-            observer.on_next(OnCompleted);
-            observer.on_completed();
+            observer.onNext(OnCompleted);
+            observer.onCompleted();
         }, function(e:String) {
-            observer.on_next(OnError(e));
-            observer.on_completed();
+            observer.onNext(OnError(e));
+            observer.onCompleted();
         }, function(v:T) {
-            observer.on_next(OnNext(v));
+            observer.onNext(OnNext(v));
         }
         );
 

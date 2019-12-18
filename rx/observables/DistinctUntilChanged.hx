@@ -26,7 +26,7 @@ class DistinctUntilChanged<T> extends Observable<T> {
                 currentKey = value;
             }
             catch (exception:String) {
-                observer.on_error(exception);
+                observer.onError(exception);
                 return;
             }
             var sameKey = false;
@@ -38,17 +38,17 @@ class DistinctUntilChanged<T> extends Observable<T> {
                     sameKey = _comparer(currentKey, prevKey);
                 }
                 catch (ex:String) {
-                    observer.on_error(ex);
+                    observer.onError(ex);
                     return;
                 }
             }
 
             if (!sameKey) {
                 prevKey = currentKey;
-                observer.on_next(value);
+                observer.onNext(value);
             }
         };
-        var distinctUntilChanged_observer = Observer.create(observer.on_completed, observer.on_error, onNextWarp);
+        var distinctUntilChanged_observer = Observer.create(observer.onCompleted, observer.onError, onNextWarp);
 
         return _source.subscribe(distinctUntilChanged_observer);
     }

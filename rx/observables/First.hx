@@ -22,22 +22,22 @@ class First<T> extends Observable<T> {
             function() {
                 if (notPublished) {
                     if (_defaultValue != null) {
-                        observer.on_next(_defaultValue);
+                        observer.onNext(_defaultValue);
                     }
                     else {
-                        observer.on_error("sequence is empty");
+                        observer.onError("sequence is empty");
                     }
                 }
-                observer.on_completed();
+                observer.onCompleted();
             },
             function(e:String) {
-                observer.on_error(e);
+                observer.onError(e);
             },
             function(v:T) {
                 if (notPublished) {
                     notPublished = false;
-                    observer.on_next(v);
-                    observer.on_completed();
+                    observer.onNext(v);
+                    observer.onCompleted();
                 }
             }
         );

@@ -41,16 +41,16 @@ class SubscribeOfEnum<T> extends Observable<T> {
         return scheduler.schedule_recursive(function(self:Void -> Void) {
             try {
                 if (index >= _enum.length) {
-                    observer.on_completed();
+                    observer.onCompleted();
 
                 }else{
-                    observer.on_next(_enum[index]);
+                    observer.onNext(_enum[index]);
                     index++;
                     self();
                 }
 
             } catch (e:String) {
-                observer.on_error(e);
+                observer.onError(e);
             }
         });
     }
@@ -74,7 +74,7 @@ class SubscribeInterval<T> extends Observable<T> {
         var counter = AtomicData.create(0);
         var succ = function(count:Int):Int {
             //trace(count);
-            observer.on_next(cast count);
+            observer.onNext(cast count);
             return count + 1;
         }
         return scheduler.schedule_periodically(period, period, function() {

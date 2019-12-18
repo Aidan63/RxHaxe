@@ -1,63 +1,77 @@
 package rx.observables;
+
+import rx.Observer;
 import rx.observables.IObservable;
 import rx.disposables.ISubscription;
 import rx.observers.IObserver;
-import rx.notifiers.Notification;
-import rx.Observer;
 import rx.disposables.SingleAssignment;
 import rx.disposables.Composite;
-class Amb<T> extends Observable<T> {
-    var _source1:IObservable<T>;
-    var _source2:IObservable<T>;
 
-    public function new(source1:IObservable<T>, source2:IObservable<T>) {
+class Amb<T> extends Observable<T>
+{
+    final source1 : IObservable<T>;
+    final source2 : IObservable<T>;
+
+    public function new(_source1 : IObservable<T>, _source2 : IObservable<T>)
+    {
         super();
-        _source1 = source1;
-        _source2 = source2;
+
+        source1 = _source1;
+        source2 = _source2;
     }
 
-    override public function subscribe(observer:IObserver<T>):ISubscription {
-        if (_source2 == null) return _source1.subscribe(observer);
+    override public function subscribe(_observer : IObserver<T>) : ISubscription
+    {
+        if (source2 == null)
+        {
+            return source1.subscribe(_observer);
+        }
 
-        var subscriptionA = SingleAssignment.create();
-        var subscriptionB = SingleAssignment.create();
-        var __unsubscribe = Composite.create();
-        __unsubscribe.add(subscriptionA);
-        __unsubscribe.add(subscriptionB);
-        inline function unsubscribeA() { subscriptionA.unsubscribe();};
-        inline function unsubscribeB() { subscriptionB.unsubscribe();};
-        var observerA = Observer.create(
-            function() {
+        final subscriptionA = SingleAssignment.create();
+        final subscriptionB = SingleAssignment.create();
+
+        final unsubscribe = Composite.create();
+        unsubscribe.add(subscriptionA);
+        unsubscribe.add(subscriptionB);
+
+        inline function unsubscribeA()
+            subscriptionA.unsubscribe();
+        inline function unsubscribeB()
+            subscriptionB.unsubscribe();
+
+        final observerA = Observer.create(
+            () -> {
                 unsubscribeB();
-                observer.on_completed();
+                _observer.onCompleted();
             },
-            function(e:String) {
+            (e : String) -> {
                 unsubscribeB();
-                observer.on_error(e);
+                _observer.onError(e);
             },
-            function(v:T) {
+            (v : T) -> {
                 unsubscribeB();
-                observer.on_next(v);
+                _observer.onNext(v);
             }
         );
-        var observerB = Observer.create(
-            function() {
+        final observerB = Observer.create(
+            () -> {
                 unsubscribeA();
-                observer.on_completed();
+                _observer.onCompleted();
             },
-            function(e:String) {
+            (e : String) -> {
                 unsubscribeA();
-                observer.on_error(e);
+                _observer.onError(e);
             },
-            function(v:T) {
+            (v : T) -> {
                 unsubscribeA();
-                observer.on_next(v);
+                _observer.onNext(v);
             }
         );
-        subscriptionA.set(_source1.subscribe(observerA));
-        subscriptionB.set(_source2.subscribe(observerB));
+        
+        subscriptionA.set(source1.subscribe(observerA));
+        subscriptionB.set(source2.subscribe(observerB));
 
-        return __unsubscribe;
+        return unsubscribe;
 
     }
 }

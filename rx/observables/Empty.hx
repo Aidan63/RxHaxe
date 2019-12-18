@@ -8,7 +8,7 @@ class Empty<T> extends Observable<T> {
     }
 
     override public function subscribe(observer:IObserver<T>):ISubscription {
-        observer.on_completed();
+        observer.onCompleted();
         return Subscription.empty();
     }
 }

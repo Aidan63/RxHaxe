@@ -22,13 +22,13 @@ class Dematerialize<T> extends Observable<T> {
             switch(v ) {
                 case OnCompleted:{
 
-                    observer.on_completed();
+                    observer.onCompleted();
                 }
                 case OnError(e):{
-                    observer.on_error(e);
+                    observer.onError(e);
                 }
                 case OnNext(vv) :{
-                    observer.on_next(vv);
+                    observer.onNext(vv);
                 }
                 default: {
 

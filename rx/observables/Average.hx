@@ -1,49 +1,62 @@
 package rx.observables;
+
+import rx.Observer;
+import rx.observers.IObserver;
 import rx.observables.IObservable;
 import rx.disposables.ISubscription;
-import rx.observers.IObserver;
-import rx.notifiers.Notification;
-import rx.Observer;
-typedef AverageState = {
-    var sum:Float;
-    var count:Int;
-}
-class Average<T> extends Observable<Float> {
-    var _source:IObservable<T>;
 
-    public function new(source:IObservable<T>) {
+typedef AverageState = {
+    var sum : Float;
+    var count : Int;
+}
+
+class Average<T> extends Observable<Float>
+{
+    final source : IObservable<T>;
+
+    public function new(_source : IObservable<T>)
+    {
         super();
-        _source = source;
+
+        source = _source;
     }
 
     override public function subscribe(observer:IObserver<Float>):ISubscription {
 
-        var state = AtomicData.create({sum:0.0, count:0});
+        var state            = AtomicData.create({ sum : 0.0, count : 0 });
         var average_observer = Observer.create(
-            function() {
-                var s:AverageState = AtomicData.unsafe_get(state);
-                if (s.count == 0.0) throw "Sequence contains no elements.";
-                var average:Float = s.sum / s.count;
-                observer.on_next(average);
-                observer.on_completed();
+            () -> {
+                var s : AverageState = AtomicData.unsafe_get(state);
+
+                if (s.count == 0.0)
+                {
+                    observer.onError('Sequence contains no elements');
+                }
+
+                final average : Float = s.sum / s.count;
+
+                observer.onNext(average);
+                observer.onCompleted();
             },
-            observer.on_error,
-            function(value:T) {
-                AtomicData.update(function(s:AverageState) {
-                    try {
-                        s.sum = s.sum + cast(value);
+            observer.onError,
+            (value : T) -> {
+                AtomicData.update((s : AverageState) -> {
+                    try
+                    {
+                        s.sum   = s.sum + cast(value);
                         s.count = s.count + 1;
                     }
-                    catch (ex:String) {
-                        observer.on_error(ex);
+                    catch (ex : String)
+                    {
+                        observer.onError(ex);
                     }
+
                     return s;
                 }, state);
-
             }
         );
 
-        return _source.subscribe(average_observer);
+        return source.subscribe(average_observer);
     }
 }
  

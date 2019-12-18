@@ -21,10 +21,10 @@ class Find<T> extends Observable<T> {
         var __subscription = SingleAssignment.create();
         var find_observer = Observer.create(
             function() {
-                observer.on_completed();
+                observer.onCompleted();
             },
             function(e:String) {
-                observer.on_error(e);
+                observer.onError(e);
 
             },
             function(value:T) {
@@ -33,12 +33,12 @@ class Find<T> extends Observable<T> {
                     isPassed = _predicate(value);
                 }
                 catch (ex:String) {
-                    observer.on_error(ex);
+                    observer.onError(ex);
                     return;
                 }
                 if (isPassed) {
-                    observer.on_next(value);
-                    observer.on_completed();
+                    observer.onNext(value);
+                    observer.onCompleted();
                     __subscription.unsubscribe();
                 }
             }

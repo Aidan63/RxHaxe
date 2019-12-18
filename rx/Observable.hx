@@ -1,6 +1,6 @@
 package rx;
-import rx.Core.RxObserver;
-import rx.Core.RxSubscription;
+
+import haxe.Timer;
 //Creating Observables
 
 import rx.observables.Create;
@@ -81,6 +81,8 @@ import rx.observers.IObserver;
 import rx.notifiers.Notification;
 import rx.schedulers.IScheduler;
 
+using Safety;
+
 //type +'a observable = 'a observer -> subscription
 /* Internal module. (see Rx.Observable)
  *
@@ -89,204 +91,168 @@ import rx.schedulers.IScheduler;
  */
 
 
-class Observable<T> implements IObservable<T> {
-    public function new() {
-
+class Observable<T> implements IObservable<T>
+{
+    public function new()
+    {
+        //
     }
 
-    public function subscribe(observer:IObserver<T>):ISubscription {
+    public static final currentThread = new CurrentThread();
+
+    public static final newThread = new NewThread();
+
+    public static final immediate = new Immediate();
+
+    public static final test = new Test();
+
+    public function subscribe(_observer : IObserver<T>) : ISubscription
         return Subscription.empty();
-    }
-    public static var currentThread:CurrentThread = new CurrentThread();
-    public static var newThread:NewThread = new NewThread();
-    public static var immediate:Immediate = new Immediate();
-    public static var test:Test = new Test();
 
-    static public function empty<T>() return new Empty<T>();
+    static public function empty<T>()
+        return new Empty<T>();
 
-    static public function error(e:String) return new Error(e);
+    static public function error(_error : String)
+        return new Error(_error);
 
-    static public function of_never() return new Never();
+    static public function of_never() return
+        new Never();
 
-    static public function of_return<T>(v:T) return new Return(v);
+    static public function of_return<T>(_value : T)
+        return new Return(_value);
 
-    static public function create<T>(f:IObserver<T> -> ISubscription) {
-        return new Create(f);
-    }
+    static public function create<T>(_function : (_observer : IObserver<T>) -> ISubscription)
+        return new Create(_function);
 
-    static public function defer<T>(_observableFactory:Void -> Observable<T>) {
+    static public function defer<T>(_observableFactory : () -> Observable<T>)
         return new Defer(_observableFactory);
-    }
 
-    static public function of<T>(__args:T):Observable<T> {
-        return new Return(__args );
-    }
+    static public function of<T>(_args : T) : Observable<T>
+        return new Return(_args);
 
-    static public function of_enum<T>(__args:Array<T>):Observable<T> {
-        return new Create(function(observer:IObserver<T>) {
-            for (i in 0...__args.length) {
-                observer.on_next(__args[i]);
+    static public function of_enum<T>(_args:Array<T>) : Observable<T>
+        return new Create((_observer : IObserver<T>) -> {
+            for (i in 0..._args.length)
+            {
+                _observer.onNext(_args[i]);
             }
-            observer.on_completed();
+
+            _observer.onCompleted();
+
             return Subscription.empty();
         });
-    }
 
-    static public function fromRange(?initial:Null<Int>, ?limit:Null<Int>, ?step:Null<Int>) {
-        if (limit == null && step == null) {
-            initial = 0;
-            limit = 1;
-        }
-        if (step == null) {
-            step = 1;
-        }
-        return Observable.create(function(observer:IObserver<Int>) {
-            var i = initial;
-            while (i < limit) {
-                observer.on_next(i);
-                trace(i);
-                i += step;
+    static public function fromRange(_initial : Int = 0, _step : Int = 1, _limit : Int)
+        return Observable.create((_observer : IObserver<Int>) -> {
+            var i = _initial;
+
+            while (i < _limit)
+            {
+                _observer.onNext(i);
+                i += _step;
             }
-            observer.on_completed();
+
+            _observer.onCompleted();
+
             return Subscription.empty();
         });
-    }
 
-    static public function find<T>(observable:Observable<T>, comparer:Null<T -> Bool>) {
-        return new Find( observable, comparer);
-    }
+    static public function find<T>(_observable : Observable<T>, ?_comparer : (_value : T) -> Bool)
+        return new Find(_observable, _comparer);
 
-    static public function filter<T>(observable:Observable<T>, comparer:Null<T -> Bool>) {
-        return new Filter( observable, comparer);
-    }
+    static public function filter<T>(_observable : Observable<T>, ?_comparer : (_value : T) -> Bool)
+        return new Filter(_observable, _comparer);
 
-    static public function distinctUntilChanged<T>(observable:Observable<T>, ?comparer:Null<T -> T -> Bool>) {
-        if (comparer == null) comparer = function(a, b)return a == b;
-        return new DistinctUntilChanged( observable, comparer);
-    }
+    static public function distinctUntilChanged<T>(_observable : Observable<T>, ?_comparer : (_a : T, _b : T) -> Bool)
+        return new DistinctUntilChanged(_observable, _comparer.or((_a, _b) -> _a == _b));
 
-    static public function distinct<T>(observable:Observable<T>, ?comparer:Null<T -> T -> Bool>) {
-        if (comparer == null) comparer = function(a, b)return a == b;
-        return new Distinct( observable, comparer);
-    }
+    static public function distinct<T>(_observable : Observable<T>, ?_comparer : (_a : T, _b : T) -> Bool)
+        return new Distinct(_observable, _comparer.or((_a, _b) -> _a == _b));
 
-    static public function delay<T>(source:Observable<T>, dueTime:Float, ?scheduler:Null<IScheduler>) {
-        if (scheduler == null)scheduler = Scheduler.timeBasedOperations;
-        return new Delay<T>(source, haxe.Timer.stamp() + dueTime, scheduler );
-    }
+    static public function delay<T>(_source : Observable<T>, _dueTime : Float, ?_scheduler : IScheduler)
+        return new Delay<T>(_source, Timer.stamp() + _dueTime, _scheduler.or(Scheduler.timeBasedOperations));
 
-    static public function timestamp<T>(source:Observable<T>, ?scheduler:Null<IScheduler>) {
-        if (scheduler == null)scheduler = Scheduler.timeBasedOperations;
-        return new Timestamp<T>(source, scheduler );
-    }
+    static public function timestamp<T>(_source : Observable<T>, ?_scheduler : IScheduler)
+        return new Timestamp<T>(_source, _scheduler.or(Scheduler.timeBasedOperations));
 
-    static public function scan<T, R>(observable:Observable<T>, seed:Null<R>, accumulator:R -> T -> R) {
-        return new Scan(observable, seed, accumulator );
-    }
+    static public function scan<T, R>(_observable : Observable<T>, ?_seed : R, _accumulator : R -> T -> R)
+        return new Scan(_observable, _seed, _accumulator);
 
-    static public function last<T>(observable:Observable<T>, ?source:Null<T>) {
-        return new Last(observable, source);
-    }
+    static public function last<T>(_observable : Observable<T>, ?_source : T)
+        return new Last(_observable, _source);
 
-    static public function first<T>(observable:Observable<T>, ?source:Null<T>) {
-        return new First(observable, source);
-    }
+    static public function first<T>(_observable : Observable<T>, ?_source : T)
+        return new First(_observable, _source);
 
-    static public function defaultIfEmpty<T>(observable:Observable<T>, source:T) {
-        return new DefaultIfEmpty( observable, source);
-    }
+    static public function defaultIfEmpty<T>(_observable : Observable<T>, _source : T)
+        return new DefaultIfEmpty(_observable, _source);
 
-    static public function contains<T>(observable:Observable<T>, source:T) {
-        return new Contains( observable, function(v)return v == source);
-    }
+    static public function contains<T>(_observable : Observable<T>, _source : T)
+        return new Contains(_observable, (v) -> v == _source);
 
-    static public function concat<T>(observable:Observable<T>, source:Array<Observable<T>>) {
-        return new Concat([observable].concat(source));
-    }
+    static public function concat<T>(_observable : Observable<T>, _source : Array<Observable<T>>)
+        return new Concat([ _observable ].concat(_source));
 
-    static public function combineLatest<T,R>(observable:Observable<T>, source:Array<Observable<T>>, combinator:Array<T> -> R) {
-        return new CombineLatest([observable].concat(source), combinator);
-    }
+    static public function combineLatest<T,R>(_observable : Observable<T>, _source : Array<Observable<T>>, _combinator : Array<T> -> R)
+        return new CombineLatest([ _observable ].concat(_source), _combinator);
 
-    static public function of_catch<T>(observable:Observable<T>, errorHandler:String -> Observable<T>) {
-        return new Catch(observable, errorHandler);
-    }
+    static public function of_catch<T>(_observable : Observable<T>, _errorHandler : String -> Observable<T>)
+        return new Catch(_observable, _errorHandler);
 
-    static public function buffer<T>(observable:Observable<T>, count:Int) {
-        return new Buffer(observable, count);
-    }
+    static public function buffer<T>(_observable : Observable<T>, _count : Int)
+        return new Buffer(_observable, _count);
 
-    static public function observer<T>(observable:Observable<T>, fun:T -> Void) {
-        return observable.subscribe(Observer.create(null, null, fun));
-    }
+    static public function observer<T>(_observable : Observable<T>, _fun : T -> Void)
+        return _observable.subscribe(Observer.create(null, null, _fun));
 
-    static public function amb<T>(observable1:Observable<T>, observable2:Observable<T>) {
-        return new Amb(observable1, observable2);
-    }
+    static public function amb<T>(_observable1 : Observable<T>, _observable2 : Observable<T>)
+        return new Amb(_observable1, _observable2);
 
-    static public function average<T>(observable:Observable<T>) {
-        return new Average(observable);
-    }
+    static public function average<T>(_observable : Observable<T>)
+        return new Average(_observable);
 
-    static public function materialize<T>(observable:Observable<T>) {
-        return new Materialize(observable);
-    }
+    static public function materialize<T>(_observable : Observable<T>)
+        return new Materialize(_observable);
 
-    static public function dematerialize<T>(observable:Observable<Notification<T>>) {
-        return new Dematerialize(observable);
-    }
+    static public function dematerialize<T>(_observable : Observable<Notification<T>>)
+        return new Dematerialize(_observable);
 
-    static public function length<T>(observable:Observable<T>) {
-        return new Length(observable);
-    }
+    static public function length<T>(_observable : Observable<T>)
+        return new Length(_observable);
 
-    static public function drop<T>(observable:Observable<T>, n:Int) {
-        return skip(observable, n);
-    }
+    static public function drop<T>(_observable : Observable<T>, _n : Int)
+        return skip(_observable, _n);
 
-    static public function skip<T>(observable:Observable<T>, n:Int) {
-        return new Skip(observable, n);
-    }
+    static public function skip<T>(_observable : Observable<T>, _n : Int)
+        return new Skip(_observable, _n);
 
-    static public function skip_until<T>(observable1:Observable<T>, observable2:Observable<T>) {
-        return new SkipUntil(observable1, observable2);
-    }
+    static public function skip_until<T>(_observable1 : Observable<T>, _observable2 : Observable<T>)
+        return new SkipUntil(_observable1, _observable2);
 
-    static public function take<T>(observable:Observable<T>, n:Int) {
-        return new Take(observable, n);
-    }
+    static public function take<T>(_observable : Observable<T>, _n : Int)
+        return new Take(_observable, _n);
 
-    static public function take_until<T>(observable1:Observable<T>, observable2:Observable<T>) {
-        return new TakeUntil(observable1, observable2);
-    }
+    static public function take_until<T>(_observable1 : Observable<T>, _observable2 : Observable<T>)
+        return new TakeUntil(_observable1, _observable2);
 
-    static public function take_last<T>(observable:Observable<T>, n:Int) {
-        return new TakeLast(observable, n);
-    }
+    static public function take_last<T>(_observable : Observable<T>, _n : Int)
+        return new TakeLast(_observable, _n);
 
-    static public function single<T>(observable:Observable<T>) {
-        return new Single(observable);
-    }
+    static public function single<T>(_observable : Observable<T>)
+        return new Single(_observable);
 
-    static public function append<T>(observable1:Observable<T>, observable2:Observable<T>) {
-        return new Append(observable1, observable2);
-    }
+    static public function append<T>(_observable1 : Observable<T>, _observable2 : Observable<T>)
+        return new Append(_observable1, _observable2);
 
-    static public function map<T, R>(observable:Observable<T>, f:T -> R) {
-        return new Map(observable, f);
-    }
+    static public function map<T, R>(_observable : Observable<T>, _f : T -> R)
+        return new Map(_observable, _f);
 
-    static public function merge<T>(observable:Observable<Observable<T>>) {
-        return new Merge(observable);
-    }
+    static public function merge<T>(_observable:Observable<Observable<T>>)
+        return new Merge(_observable);
 
-    static public function flatMap<T, R>(observable:Observable<T>, f:T -> Observable<R>) {
-        return bind(observable, f);
-    }
+    static public function flatMap<T, R>(_observable : Observable<T>, _f : T -> Observable<R>)
+        return bind(_observable, _f);
 
-    static public function bind<T, R>(observable:Observable<T>, f:T -> Observable<R>) {
-        return merge(map(observable, f));
-    }
+    static public function bind<T, R>(_observable : Observable<T>, _f : T -> Observable<R>)
+        return merge(map(_observable, _f));
 }
-   
- 

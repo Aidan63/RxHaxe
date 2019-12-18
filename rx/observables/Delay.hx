@@ -37,13 +37,13 @@ class Delay<T> extends Observable<T> {
                 var d = _scheduler.schedule_absolute(_dueTime, function() {
                     switch( notification ) {
                         case OnCompleted:{
-                            observer.on_completed();
+                            observer.onCompleted();
                         }
                         case OnError(e):{
-                            observer.on_error(e);
+                            observer.onError(e);
                         }
                         case OnNext(v) :{
-                            observer.on_next(v);
+                            observer.onNext(v);
                         }
                         default: {
 

@@ -47,19 +47,19 @@ class CheckedObserver<T> implements IObserver<T> {
         }));
     }
 
-    public function on_error(e:String) {
+    public function onError(e:String) {
         wrap_action((function() { observer.onError(e);}), Done);
     }
 
-    public function on_next(x:T) {
+    public function onNext(x:T) {
         wrap_action((function() { observer.onNext(x);}), Idle);
     }
 
-    public function on_completed() {
+    public function onCompleted() {
         wrap_action((function() { observer.onCompleted();}), Done);
     }
 
     inline static public function create<T>(observer:IObserver<T>) {
-        return new CheckedObserver<T>(observer.on_completed, observer.on_error, observer.on_next);
+        return new CheckedObserver<T>(observer.onCompleted, observer.onError, observer.onNext);
     }
 }

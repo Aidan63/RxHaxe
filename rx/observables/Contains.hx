@@ -25,13 +25,13 @@ class Contains<T> extends Observable<Bool> {
                     return s == false;
                 },
                 function(s:Bool) {
-                    observer.on_next(s);
+                    observer.onNext(s);
                     return s;
                 }, state);
-                observer.on_completed();
+                observer.onCompleted();
             },
             function(e:String) {
-                observer.on_error(e);
+                observer.onError(e);
 
             },
             function(v:T) {
@@ -40,7 +40,7 @@ class Contains<T> extends Observable<Bool> {
                 },
                 function(s:Bool) {
                     s = true;
-                    observer.on_next(s);
+                    observer.onNext(s);
                     __subscription.unsubscribe();
                     return s;
                 }, state);

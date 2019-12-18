@@ -19,10 +19,10 @@ class Map<T, R> extends Observable<R> {
 
     override public function subscribe(observer:IObserver<R>):ISubscription {
         var map_observer = Observer.create(
-            observer.on_completed,
-            observer.on_error,
+            observer.onCompleted,
+            observer.onError,
             function(v:T) {
-                observer.on_next(_f(v));
+                observer.onNext(_f(v));
             }
         );
         return _source.subscribe(map_observer);

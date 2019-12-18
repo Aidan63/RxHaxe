@@ -31,7 +31,7 @@ class CombineLatest<T,R> extends Observable<R> {
                 AtomicData.update(function(s:CombineLatestState<T>) {
                     s.latest[i] = v;
                     if (!Lambda.has(s.latest, null)) {
-                        observer.on_next(_combinator(s.latest));
+                        observer.onNext(_combinator(s.latest));
                     }
                     return s;
                 }, state);
@@ -42,7 +42,7 @@ class CombineLatest<T,R> extends Observable<R> {
             AtomicData.update(function(s:CombineLatestState<T>) {
                 s.counter--;
                 if (s.counter == 0) {
-                    observer.on_completed();
+                    observer.onCompleted();
                 }
                 return s;
             }, state);
@@ -51,7 +51,7 @@ class CombineLatest<T,R> extends Observable<R> {
         var __unsubscribe = Composite.create();
 
         for (i in 0..._source.length) {
-            var combineLatest_observer = Observer.create(on_completed, observer.on_error, on_next(i));
+            var combineLatest_observer = Observer.create(on_completed, observer.onError, on_next(i));
             var subscription = _source[i].subscribe(combineLatest_observer);
             __unsubscribe.add(subscription);
         }

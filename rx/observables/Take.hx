@@ -34,12 +34,12 @@ class Take<T> extends Observable<T> {
         var __unsubscribe = SingleAssignment.create();
         var on_completed_wrapper = function() {
             if (!error && AtomicData.get_and_set(n, counter) < n) {
-                observer.on_completed();
+                observer.onCompleted();
             }
         }
         var on_error_wrapper = function(e) {
             if (!error && AtomicData.get_and_set(n, counter) < n) {
-                observer.on_error(e);
+                observer.onError(e);
             }
         }
 
@@ -49,14 +49,14 @@ class Take<T> extends Observable<T> {
                 var count = AtomicData.update_and_get(Utils.succ, counter);
                 if (count <= n) {
                     try {
-                        observer.on_next(v);
+                        observer.onNext(v);
                     } catch (e:String) {
                         error = true;
-                        observer.on_error(e);
+                        observer.onError(e);
                         __unsubscribe.unsubscribe();
                     }
                     if (!error && count == n) {
-                        observer.on_completed();
+                        observer.onCompleted();
                     }
                 }
                 if (!error && count >= n) {

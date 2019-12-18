@@ -12,7 +12,7 @@ class Error<T> extends Observable<T> {
     }
 
     override public function subscribe(observer:IObserver<T>):ISubscription {
-        observer.on_error(err);
+        observer.onError(err);
         return Subscription.empty();
     }
 }

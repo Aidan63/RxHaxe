@@ -85,7 +85,7 @@ class TestScheduler extends haxe.unit.TestCase {
         });    
         assertTrue(ran);     
     }
-#if cpp
+
     public function  test_current_thread_schedule_relative_action_due  (){
       var id = Utils.current_thread_id ();
       var ran =  false;
@@ -261,9 +261,7 @@ public function  test_current_thread_schedule_nested_actions (){
     //(* Wait for the other thread *)
     Sys.sleep(0.1); 
     assertTrue(true);
-  }
-#end
-  
+  } 
 }
 
 

@@ -10,7 +10,7 @@ class ObserverBase<T> implements IObserver<T> {
     var observer:RxObserver<T>;
     var state:AtomicData<Bool>;
 
-    public function on_completed() {
+    public function onCompleted() {
         var was_stopped = stop();
         if (!was_stopped) observer.onCompleted();
     }
@@ -19,12 +19,12 @@ class ObserverBase<T> implements IObserver<T> {
         return AtomicData.compare_and_set(false, true, state);
     }
 
-    public function on_error(e:String) {
+    public function onError(e:String) {
         var was_stopped = stop() ;
         if (!was_stopped) observer.onError(e) ;
     }
 
-    public function on_next(x:T) {
+    public function onNext(x:T) {
         if (!AtomicData.unsafe_get(state))
             observer.onNext(x);
     }
@@ -38,6 +38,6 @@ class ObserverBase<T> implements IObserver<T> {
     }
 
     inline static public function create<T>(observer:IObserver<T>) {
-        return new ObserverBase<T>(observer.on_completed, observer.on_error, observer.on_next);
+        return new ObserverBase<T>(observer.onCompleted, observer.onError, observer.onNext);
     }
 }

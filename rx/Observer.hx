@@ -1,55 +1,47 @@
 package rx;
+
 import rx.Core.RxObserver;
-import rx.observers.ObserverBase;
 import rx.observers.CheckedObserver;
 import rx.observers.SynchronizedObserver;
 import rx.observers.AsyncLockObserver;
 import rx.observers.IObserver;
 
-class Observer<T> implements IObserver<T> {
+using Safety;
 
-    var observer:RxObserver<T>;
+class Observer<T> implements IObserver<T>
+{
+    final observer : RxObserver<T>;
 
-    public function new(?_on_completed:Void -> Void, ?_on_error:String -> Void, _on_next:T -> Void) {
-
-        observer = { onCompleted:_on_completed,
-            onError:_on_error,
-            onNext:_on_next };
-
+    public function new(?_on_completed:Void -> Void, ?_on_error:String -> Void, _on_next:T -> Void)
+    {
+        observer = {
+            onCompleted : _on_completed,
+            onError     : _on_error,
+            onNext      : _on_next
+        };
     }
 
-    public function on_completed() {
+    public function onCompleted()
         observer.onCompleted();
-    }
 
-    public function on_error(e:String) {
-        observer.onError(e) ;
-    }
+    public function onError(_e : String)
+        observer.onError(_e);
 
-    public function on_next(x:T) {
+    public function onNext(_x : T)
+        observer.onNext(_x);
 
-        observer.onNext(x);
-    }
+    static public function create<T>(?_onCompleted : () -> Void, ?_onError : (_error : String) -> Void, _onNext : (_value : T) -> Void)
+        return new Observer(
+            _onCompleted.or(() -> {}),
+            _onError.or((_error) -> throw _error),
+            _onNext);
 
+    inline static public function checked<T>(_observer : IObserver<T>)
+        return CheckedObserver.create(_observer);
 
-    static public function create<T>(?_on_completed:Void -> Void, ?_on_error:String -> Void, ?_on_next:T -> Void) {
-        if (_on_completed == null)_on_completed = function() {};
-        if (_on_error == null)_on_error = function(e:String) { throw e;};
-        if (_on_next == null) throw "_on_next null error ";
-        return new Observer(_on_completed, _on_error, _on_next);
-    }
+    inline static public function synchronize<T>(_observer : IObserver<T>)
+        return SynchronizedObserver.create(_observer);
 
-    inline static public function checked<T>(observer:IObserver<T>) {
-        return CheckedObserver.create(observer);
-    }
-
-    inline static public function synchronize<T>(observer:IObserver<T>) {
-        return SynchronizedObserver.create(observer);
-    }
-
-    inline static public function synchronize_async_lock<T>(observer:IObserver<T>) {
-        return AsyncLockObserver.create(observer);
-    }
-
+    inline static public function synchronize_async_lock<T>(_observer : IObserver<T>)
+        return AsyncLockObserver.create(_observer);
 }
- 

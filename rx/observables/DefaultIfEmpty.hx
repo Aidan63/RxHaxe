@@ -21,16 +21,16 @@ class DefaultIfEmpty<T> extends Observable<T> {
         var defaultIfEmpty_observer = Observer.create(
             function() {
                 if (!hasValue) {
-                    observer.on_next(_defaultValue);
+                    observer.onNext(_defaultValue);
                 }
-                observer.on_completed();
+                observer.onCompleted();
             },
             function(e:String) {
-                observer.on_error(e);
+                observer.onError(e);
             },
             function(v:T) {
                 hasValue = true;
-                observer.on_next(v);
+                observer.onNext(v);
             }
         );
         return _source.subscribe(defaultIfEmpty_observer);

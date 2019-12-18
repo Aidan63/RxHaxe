@@ -17,10 +17,10 @@ class IgnoreElements<T> extends Observable<T> {
     override public function subscribe(observer:IObserver<T>):ISubscription {
         var ignoreElements_observer = Observer.create(
             function() {
-                observer.on_completed();
+                observer.onCompleted();
             },
             function(e:String) {
-                observer.on_error(e);
+                observer.onError(e);
             },
             function(v:T) {
 

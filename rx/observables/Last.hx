@@ -1,54 +1,66 @@
 package rx.observables;
+
+import rx.Observer;
+import rx.observers.IObserver;
+import rx.notifiers.Notification;
 import rx.observables.IObservable;
 import rx.disposables.ISubscription;
 import rx.disposables.SingleAssignment;
-import rx.observers.IObserver;
-import rx.notifiers.Notification;
-import rx.Observer;
 
-class Last<T> extends Observable<T> {
-    var _source:IObservable<T>;
-    var _defaultValue:Null<T>;
+class Last<T> extends Observable<T>
+{
+    final source : IObservable<T>;
 
-    public function new(source:IObservable<T>, defaultValue:Null<T>) {
+    final defaultValue : Null<T>;
+
+    public function new(_source : IObservable<T>, _defaultValue : Null<T>)
+    {
         super();
-        _source = source;
-        _defaultValue = defaultValue;
+
+        source       = _source;
+        defaultValue = _defaultValue;
     }
 
-    override public function subscribe(observer:IObserver<T>):ISubscription {
-        var notPublished:Bool = true;
-        var lastValue:Null<T>;
-        var defaultIfEmpty_observer = Observer.create(
-            function() {
-                if (notPublished) {
-                    if (_defaultValue != null) {
-                        observer.on_next(_defaultValue);
+    override public function subscribe(observer : IObserver<T>) : ISubscription
+    {
+        var notPublished = true;
+        var lastValue    = null;
+
+        final defaultIfEmpty_observer = Observer.create(
+            () -> {
+                if (notPublished)
+                {
+                    if (defaultValue != null)
+                    {
+                        observer.onNext(defaultValue);
                     }
-                    else {
-                        observer.on_error("sequence is empty");
+                    else
+                    {
+                        observer.onError("sequence is empty");
                     }
                 }
-                else {
-                    if (lastValue != null) {
-                        observer.on_next(lastValue);
+                else
+                {
+                    if (lastValue != null)
+                    {
+                        observer.onNext(lastValue);
                     }
-                    else {
-                        observer.on_error("sequence is empty");
+                    else
+                    {
+                        observer.onError("sequence is empty");
                     }
                 }
 
-                observer.on_completed();
+                observer.onCompleted();
             },
-            function(e:String) {
-                observer.on_error(e);
-            },
-            function(v:T) {
+            (e : String) -> observer.onError(e),
+            (v : T) -> {
                 notPublished = false;
-                lastValue = v;
+                lastValue    = v;
             }
         );
-        return _source.subscribe(defaultIfEmpty_observer);
+        
+        return source.subscribe(defaultIfEmpty_observer);
     }
 }
  

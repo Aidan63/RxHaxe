@@ -20,15 +20,15 @@ class Distinct<T> extends Observable<T> {
     override public function subscribe(observer:IObserver<T>):ISubscription {
         var values = new List<T>();
         var distinct_observer = Observer.create(function() {
-            observer.on_completed();
+            observer.onCompleted();
         },
-        observer.on_error,
+        observer.onError,
         function(v:T) {
             var hasValue = Lambda.exists(values, function(x) {
                 return _comparer(x, v);
             });
             if (!hasValue) {
-                observer.on_next(v);
+                observer.onNext(v);
                 values.add(v);
             }
         });

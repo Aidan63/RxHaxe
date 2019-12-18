@@ -25,20 +25,20 @@ class Single<T> extends Observable<T> {
         var single_observer = Observer.create(function() {
             if (!has_too_many_elements) {
                 if (value == null) {
-                    observer.on_error("Sequence contains no elements");
+                    observer.onError("Sequence contains no elements");
                 } else {
-                    observer.on_next(value);
-                    observer.on_completed();
+                    observer.onNext(value);
+                    observer.onCompleted();
                 }
             }
         },
-        observer.on_error,
+        observer.onError,
         function(v:T) {
             if (value == null) {
                 value = v;
             } else {
                 has_too_many_elements = true;
-                observer.on_error("Sequence contains too many elements");
+                observer.onError("Sequence contains too many elements");
                 __unsubscribe.unsubscribe();
             }
         });

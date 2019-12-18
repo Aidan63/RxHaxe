@@ -1,7 +1,8 @@
 package rx.observers;
+
 import rx.Utils;
 import rx.Core.RxObserver;
-import rx.Mutex;
+
 class AsyncLockObserver<T> implements IObserver<T> {
     /* Original implementation:
    * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Core/Reactive/Internal/AsyncLockObserver.cs
@@ -28,19 +29,19 @@ class AsyncLockObserver<T> implements IObserver<T> {
         async_lock.wait(thunk);
     }
 
-    public function on_error(e:String) {
-        observer.on_error(e);
+    public function onError(e:String) {
+        observer.onError(e);
     }
 
-    public function on_next(x:T) {
-        observer.on_next(x);
+    public function onNext(x:T) {
+        observer.onNext(x);
     }
 
-    public function on_completed() {
-        observer.on_completed();
+    public function onCompleted() {
+        observer.onCompleted();
     }
 
     inline static public function create<T>(observer:IObserver<T>) {
-        return new AsyncLockObserver<T>(observer.on_completed, observer.on_error, observer.on_next);
+        return new AsyncLockObserver<T>(observer.onCompleted, observer.onError, observer.onNext);
     }
 }

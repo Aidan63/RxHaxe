@@ -1,0 +1,10 @@
+-cp ./
+
+-lib haxe-concurrent
+-lib safety
+
+-D threads
+
+-cpp bin
+
+-main Main

@@ -1,84 +1,92 @@
 package rx;
+
 import rx.AtomicData;
+
 typedef RxAsyncLockState = {
     var queue:List<Void -> Void>;
     var is_acquired:Bool;
     var has_faulted:Bool;
 }
 
-class AsyncLock {
-    var lock:AtomicData<RxAsyncLockState>;
+class AsyncLock
+{
+    final lock : AtomicData<RxAsyncLockState>;
 
-    public function new() {
-        var async:RxAsyncLockState = {
-            queue:new List<Void -> Void>(),
+    public function new()
+    {
+        var async : RxAsyncLockState = {
+            queue       : new List<Void -> Void>(),
             is_acquired : false,
             has_faulted : false
-        };
+        }
+
         lock = AtomicData.create(async);
-
     }
 
-    static public function create() {
+    static public function create()
         return new AsyncLock();
-    }
 
-
-    public function dispose() {
-        AtomicData.update((function(l) {
+    public function dispose()
+        AtomicData.update(l -> {
             l.queue.clear();
             l.has_faulted = true;
             return l;
-        })
-        , lock
-        );
+        }, lock);
 
-    }
-
-
-    public function wait(action:Void -> Void) {
-
-        var old_state = AtomicData.update_if(
-            ( function(l:RxAsyncLockState) { return !l.has_faulted;}),
-            (function(l:RxAsyncLockState) {
-                l.queue.push(action);
+    public function wait(_action : () -> Void)
+    {
+        final old_state = AtomicData.update_if(
+            (l : RxAsyncLockState) -> !l.has_faulted,
+            (l : RxAsyncLockState) -> {
+                l.queue.push(_action);
                 l.is_acquired = true;
+                
                 return l;
-            }), lock);
-        var is_owner = !old_state.is_acquired;
+            }, lock);
 
-        if (is_owner) {
+        final is_owner = !old_state.is_acquired;
 
-            while (true) {
+        if (is_owner)
+        {
+            while (true)
+            {
+                var work = AtomicData.synchronize(l -> {
+                    if (l.queue.isEmpty())
+                    {
+                        var value = l -> {
+                            l.is_acquired = false;
+                            return l;
+                        }(lock.data);
 
-                var work = AtomicData.synchronize((function(l:RxAsyncLockState) {
-                    if (l.queue.isEmpty()) {
+                        AtomicData.unsafe_set(value, cast lock);
 
-                        var value = function(l:RxAsyncLockState) { l.is_acquired = false; return l;}(lock.data);
-                        AtomicData.unsafe_set(value, lock);
                         return null;
-                    } else {
-                        return l.queue.pop() ;
                     }
-                }), lock) ;
+                    else
+                    {
+                        return l.queue.pop();
+                    }
+                }, lock);
 
-                if (work != null) {
+                if (work != null)
+                {
                     var w = work;
-                    try {
+                    try
+                    {
                         w();
                     }
-                    catch (msg:String) {
-
+                    catch (_error : String)
+                    {
                         dispose();
-                        throw msg;
+
+                        throw _error;
                     }
-                } else {
+                }
+                else
+                {
                     break;
                 }
-
             }
-
         }
-
     }
 }
