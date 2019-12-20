@@ -18,16 +18,18 @@ class Scheduler
 
     public static var timeBasedOperations (get, set) : IScheduler;
 
-    static function get_timeBasedOperations() {
-        if (__timeBasedOperations == null){
-                __timeBasedOperations = Scheduler.currentThread;
+    static var _timeBasedOperations : IScheduler;
+
+    inline static function get_timeBasedOperations()
+    {
+        if (_timeBasedOperations == null)
+        {
+            _timeBasedOperations = Scheduler.currentThread;
         }
 
-        return __timeBasedOperations;
+        return _timeBasedOperations;
     }
 
-    static function set_timeBasedOperations(x)
-        return __timeBasedOperations = x;
-
-    static var __timeBasedOperations:IScheduler;
+    inline static function set_timeBasedOperations(x : IScheduler)
+        return _timeBasedOperations = x;
 }

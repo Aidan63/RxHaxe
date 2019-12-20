@@ -1,33 +1,22 @@
 package rx.observables;
-import rx.observables.IObservable;
+
 import rx.disposables.ISubscription;
 import rx.observers.IObserver;
-import rx.notifiers.Notification;
-import rx.Observer;
-import rx.disposables.SingleAssignment;
-import rx.disposables.Composite;
-/**
 
-      var observer = Observer.create(
-                function(){  
-                },
-                function(e){
+class Create<T> extends Observable<T>
+{
+    /**
+     * The function which will be called when an observer subscribes.
+     */
+    final subscriptionFunction : (_observer : IObserver<T>) -> ISubscription;
 
-                },
-                function(v:T){ 
-                    observer.on_next(v); 
-                }
-         );
-**/
-class Create<T> extends Observable<T> {
-    var _subscribe:IObserver<T> -> ISubscription;
-
-    public function new(_subscribe:IObserver<T> -> ISubscription) {
-        this._subscribe = _subscribe;
+    public function new(_subscriptionFunction : (_observer : IObserver<T>) -> ISubscription)
+    {
         super();
+
+        subscriptionFunction = _subscriptionFunction;
     }
 
-    override public function subscribe(observer:IObserver<T>):ISubscription {
-        return _subscribe(observer);
-    }
+    override public function subscribe(_observer : IObserver<T>) : ISubscription
+        return subscriptionFunction(_observer);
 }

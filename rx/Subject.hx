@@ -11,14 +11,14 @@ import rx.Subscription;
 import rx.Observable;
 import rx.Utils;
 
+/**
+ * Implementation based on :
+ * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Linq/Reactive/Subjects/Subject.cs
+ */
 class Subject<T> extends Observable<T> implements ISubject<T>
 {
     final observers : AtomicData<Array<IObserver<T>>>;
 
-    /**
-     * Implementation based on :
-     * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Linq/Reactive/Subjects/Subject.cs
-     */
     static public function create<T>()
         return new Subject<T>();
 
@@ -31,8 +31,7 @@ class Subject<T> extends Observable<T> implements ISubject<T>
     static public function behavior<T>(_default_value : T)
         return Behavior.create(_default_value);
 
-
-    public function new()
+    function new()
     {
         super();
 

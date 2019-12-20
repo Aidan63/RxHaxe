@@ -6,22 +6,27 @@ import rx.notifiers.Notification;
 import rx.Observer;
 import rx.schedulers.IScheduler;
 
-class SubscribeOnThis<T> extends Observable<T> {
-    var _source:IObservable<T>;
-    var scheduler:IScheduler;
+class SubscribeOnThis<T> extends Observable<T>
+{
+    final _source:IObservable<T>;
+
+    final scheduler:IScheduler;
+
     var __unsubscribe:ISubscription;
+
     public function new(scheduler:IScheduler, source:IObservable<T>) {
         super();
         _source = source;
         this.scheduler = scheduler;
     }
-    function doUnsubscribe()
-    {
-        scheduler.schedule_absolute(null,    function() { __unsubscribe.unsubscribe();  } );
 
-    }
-    override public function subscribe(observer:IObserver<T>):ISubscription {
-        scheduler.schedule_absolute(null, function() { __unsubscribe = _source.subscribe(observer); });
+    function doUnsubscribe()
+        scheduler.schedule_absolute(null, () -> __unsubscribe.unsubscribe());
+
+    override public function subscribe(observer:IObserver<T>) : ISubscription
+    {
+        scheduler.schedule_absolute(null, () -> __unsubscribe = _source.subscribe(observer));
+
         return Subscription.create(doUnsubscribe);
     }
 }
