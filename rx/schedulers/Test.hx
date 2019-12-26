@@ -1,100 +1,88 @@
 package rx.schedulers;
-import rx.Utils;
+
 import rx.disposables.ISubscription;
-import rx.Core;
 
+using Safety;
+
+/**
+ * Implementation based on:
+ * /usr/local/src/RxJava/rxjava-core/src/main/java/rx/schedulers/TestScheduler.java
+ */
 class TestBase implements Base {
-    /* Implementation based on:
-   * /usr/local/src/RxJava/rxjava-core/src/main/java/rx/schedulers/TestScheduler.java
-   */
+	final queue:List<TimedAction>;
 
-    var queue:List<TimedAction>;
-    var time:Float;
+	var time:Float;
 
-    public function new() {
-        queue = new List<TimedAction>();
-        time = 0;
-    }
+	public function new() {
+		queue = new List<TimedAction>();
+		time = 0;
+	}
 
+	public function now():Float
+		return time;
 
-    public function now():Float return time;
+	public function schedule_absolute(_dueTime:Null<Float>, _action:() -> Void):ISubscription {
+		final execTime = _dueTime.or(now());
+		final discardableAction = DiscardableAction.create(() -> {
+			_action();
+			return Subscription.empty();
+		});
 
-    public function schedule_absolute(due_time:Null<Float>, action:Void -> Void):ISubscription {
+		queue.add(new TimedAction(discardableAction.action, execTime));
 
-        if (due_time == null) due_time = now();
-        var exec_time = due_time;
-        var discardable_action = DiscardableAction.create(function () {
-            action();
-            return Subscription.empty();
-        });
-        queue.add(new TimedAction(discardable_action.action, exec_time));
-        return discardable_action.unsubscribe();
-    }
+		return discardableAction.unsubscribe();
+	}
 
+	public function trigger_actions(_targetTime:Float) {
+		while (!queue.isEmpty()) {
+			final timedAction = queue.first();
+			if (timedAction.execTime > _targetTime)
+				break;
 
-    public function trigger_actions(target_time:Float) {
+			queue.pop();
+			time = timedAction.execTime == 0 ? time : timedAction.execTime;
+			timedAction.discardableAction();
+		}
 
-        while (!queue.isEmpty()) {
-            var timed_action = queue.first();
-            if (timed_action.exec_time > target_time) break;
-            queue.pop();
-            time = timed_action.exec_time == 0 ? time : timed_action.exec_time;
-            timed_action.discardable_action();
+		time = _targetTime;
+	}
 
-        }
-        time = target_time;
+	public function trigger_actions_until_now()
+		trigger_actions(time);
 
-    }
+	public function advance_time_to(_delay:Float)
+		trigger_actions(_delay);
 
-    public function trigger_actions_until_now() {
-        trigger_actions(time);
-    }
+	public function advance_time_by(_delay:Float)
+		trigger_actions(time + _delay);
 
-    public function advance_time_to(delay:Float) {
-
-        trigger_actions(delay);
-    }
-
-    public function advance_time_by(delay:Float) {
-        var target_time = time + delay;
-        trigger_actions(target_time);
-    }
-
-    public function reset() {
-
-        queue.clear();
-        time = 0;
-    }
+	public function reset() {
+		queue.clear();
+		time = 0;
+	}
 }
 
 class Test extends MakeScheduler {
-    var testScheduler:TestBase;
+	final testScheduler:TestBase;
 
-    public function new() {
-        super();
-        testScheduler = new TestBase();
-        baseScheduler = testScheduler;
+	public function new() {
+		super(new TestBase());
 
-    }
+		testScheduler = cast baseScheduler;
+	}
 
-    public function trigger_actions(target_time) {
-        testScheduler.trigger_actions(target_time);
-    }
+	public function trigger_actions(_targetTime)
+		testScheduler.trigger_actions(_targetTime);
 
-    public function trigger_actions_until_now() {
-        testScheduler.trigger_actions_until_now();
-    }
+	public function trigger_actions_until_now()
+		testScheduler.trigger_actions_until_now();
 
-    public function advance_time_to(delay) {
-        testScheduler.advance_time_to(delay) ;
-    }
+	public function advance_time_to(_delay)
+		testScheduler.advance_time_to(_delay);
 
-    public function advance_time_by(delay) {
-        testScheduler.advance_time_by(delay);
-    }
+	public function advance_time_by(_delay)
+		testScheduler.advance_time_by(_delay);
 
-    public function reset() {
-
-        testScheduler.reset();
-    }
+	public function reset()
+		testScheduler.reset();
 }

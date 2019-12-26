@@ -1,89 +1,74 @@
 package rx.schedulers;
+
 import haxe.Timer;
 import rx.disposables.ISubscription;
 import rx.disposables.MultipleAssignment;
 import rx.disposables.Composite;
 import rx.Subscription;
-import rx.Core;
+
+using Safety;
+
 class MakeScheduler implements IScheduler {
-    public var baseScheduler:Base;
+	public final baseScheduler:Base;
 
-    public function new() {
+	public function new(_baseScheduler:Base) {
+		baseScheduler = _baseScheduler;
+	}
 
-    }
+	public function now():Float
+		return Timer.stamp();
 
-    public function now():Float {
+	public function schedule_absolute(_dueTime:Null<Float>, _action:() -> Void):ISubscription
+		return baseScheduler.schedule_absolute(_dueTime, _action);
 
-        return Timer.stamp();
+	public function schedule_relative(_delay:Null<Float>, _action:() -> Void):ISubscription
+		return baseScheduler.schedule_absolute(baseScheduler.now() + _delay.or(0), _action);
 
-    }
+	function schedule_k(_childSubscription:MultipleAssignment, _parentSubscription:Composite, _k:(() -> Void)->Void):ISubscription {
+		final k_subscription = _parentSubscription.is_unsubscribed() ? Subscription.empty() : baseScheduler.schedule_absolute(null,
+			() -> _k(() -> schedule_k(_childSubscription, _parentSubscription, _k)));
 
-    public function schedule_absolute(due_time:Null<Float>, action:Void -> Void):ISubscription {
+		_childSubscription.set(k_subscription);
 
-        return baseScheduler.schedule_absolute(due_time, action);
-    }
+		return _childSubscription;
+	}
 
-    public function schedule_relative(delay:Null<Float>, action:Void -> Void):ISubscription {
+	public function schedule_recursive(_cont:(() -> Void)->Void) {
+		final childSubscription = MultipleAssignment.create(Subscription.empty());
+		final parentSubscription = Composite.create([childSubscription]);
+		final scheduledSubscription = baseScheduler.schedule_absolute(null, () -> schedule_k(childSubscription, parentSubscription, _cont));
 
-        var due_time = baseScheduler.now() + delay;
-        return baseScheduler.schedule_absolute(due_time, action);
-    }
+		parentSubscription.add(scheduledSubscription);
 
-    function schedule_k(child_subscription:MultipleAssignment, parent_subscription:Composite, k:(Void -> Void) -> Void):ISubscription {
-        var k_subscription = if (parent_subscription.is_unsubscribed()) {
-              Subscription.empty();
-        } else {
-              baseScheduler.schedule_absolute(null, function() {
-                  k(function() {
-                      schedule_k(child_subscription, parent_subscription, k);
-                  });
-            });
-        };
+		return parentSubscription;
+	}
 
-        child_subscription.set(k_subscription);
-        return child_subscription;
-    }
+	function loop(_completed:AtomicData<Bool>, _period:Null<Float>, _action:() -> Void, _parent:Composite):Void {
+		if (!AtomicData.unsafe_get(_completed)) {
+			final startedAt = now();
 
-    public function schedule_recursive(cont:(Void -> Void) -> Void) {
-        var child_subscription = MultipleAssignment.create(Subscription.empty());
-        var parent_subscription = Composite.create([child_subscription]);
-        var scheduled_subscription = baseScheduler.schedule_absolute(null, function()  {
-            schedule_k(child_subscription, parent_subscription, cont);
-        } );
-        parent_subscription.add(scheduled_subscription);
-        return parent_subscription;
-    }
+			_action();
 
-    function loop(completed:AtomicData<Bool>, period:Null<Float>, action:Void -> Void,parent :Composite ):Void {
-        if (!AtomicData.unsafe_get(completed)) {
-            var started_at = now();
-            action () ;
-            var time_taken = (now()) - started_at;
-            var delay = period - time_taken;
-            var unsubscribe2 = schedule_relative(delay, function() {
-                loop(completed, period, action,parent);
-            } );
-            parent.add(unsubscribe2);
-        }
-    }
+			final timeTaken = now() - startedAt;
+			final delay = _period.or(0) - timeTaken;
+			final unsubscribe2 = schedule_relative(delay, () -> loop(_completed, _period, _action, _parent));
 
+			_parent.add(unsubscribe2);
+		}
+	}
 
-// initial_delay:Float , due_time: Float ,action:Void-> ISubscription 
-    public function schedule_periodically(initial_delay:Null<Float>, period:Null<Float>, action:Void -> Void):ISubscription {
-        var completed = AtomicData.create(false);
-        var delay:Null<Float> = 0;
-        if (initial_delay != null)delay = initial_delay;
-        var parent_subscription:Composite = Composite.create([]);
-        var unsubscribe1 = schedule_relative(delay, function() {
-            loop(completed, period, action,parent_subscription);
-        });
-        parent_subscription.add(unsubscribe1);
-        return Subscription.create(function() {
-            AtomicData.set(true, completed);
-            parent_subscription.unsubscribe();
-        });
-    }
+	public function schedule_periodically(_initialDelay:Null<Float>, _period:Null<Float>, _action:() -> Void):ISubscription {
+		final completed = AtomicData.create(false);
+		final delay = _initialDelay.or(0);
 
+		final parentSubscription = Composite.create([]);
+		final unsubscribe = schedule_relative(delay, () -> loop(completed, _period, _action, parentSubscription));
 
+		parentSubscription.add(unsubscribe);
+
+		return Subscription.create(() -> {
+			AtomicData.set(true, completed);
+			parentSubscription.unsubscribe();
+		});
+	}
 }
-

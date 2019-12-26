@@ -7,4 +7,6 @@
 
 -cpp bin
 
---main Main
+--macro nullSafety('rx')
+
+--main RxExample

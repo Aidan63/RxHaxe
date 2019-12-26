@@ -29,6 +29,7 @@ import sys.thread.Thread;
 
 using rx.Observable;
 using Main;
+using Safety;
 
 class Main
 {
@@ -69,48 +70,13 @@ class Main
 
 	static function printArray(_array : Array<Int>)
 		trace(_array);
-
-	static function subscribeOn<T>(_observable : Observable<T>, _scheduler : rx.schedulers.MakeScheduler)
-		return new SubscribeOnThis(_scheduler, _observable);
-
-	static function observeOn<T>(_observable : Observable<T>, _scheduler : rx.schedulers.MakeScheduler)
-		return new ObserveOnThis(_observable, _scheduler);
-
-	static function subscribeFunction<T>(_observable : Observable<T>, _onNext : (_value : T) -> Void, ?_onError : (_error : String) -> Void = null, ?_onComplete : () -> Void = null)
-		return _observable.subscribe(Observer.create(_onComplete, _onError, _onNext));
-}
-
-class ObserveOnThis<T> extends Observable<T>
-{
-	final source : Observable<T>;
-
-	final scheduler : IScheduler;
-
-	public function new(_source : Observable<T>, _scheduler : IScheduler)
-	{
-		super();
-
-		source    = _source;
-		scheduler = _scheduler;
-	}
-
-	override function subscribe(_observer : IObserver<T>) : ISubscription
-	{
-		return source.subscribe(Observer.create(
-			() -> scheduler.schedule_absolute(null, _observer.onCompleted),
-			(_error) -> scheduler.schedule_absolute(null, _observer.onError.bind(_error)),
-			(_value) -> scheduler.schedule_absolute(null, _observer.onNext.bind(_value))
-		));
-	}
 }
 
 class SpecificThreadScheduler extends rx.schedulers.MakeScheduler
 {
     public function new(thread : Thread)
 	{
-        super();
-
-        baseScheduler = new SpecificThreadBase(thread);
+        super(new SpecificThreadBase(thread));
     }
 }
 
@@ -126,15 +92,10 @@ class SpecificThreadBase implements rx.schedulers.Base
     public function now() : Float
         return Timer.stamp();
 
-    public function schedule_absolute(due_time:Null<Float>, action:Void -> Void) : ISubscription
+    public function schedule_absolute(due_time : Null<Float>, action : () -> Void) : ISubscription
 	{
-        if (due_time == null)
-		{
-            due_time = now();
-        }
-
-        var action1     = Utils.create_sleeping_action(action, due_time, now);
-        var discardable = DiscardableAction.create(action1);
+        final action1     = Utils.create_sleeping_action(action, due_time.or(now()), now);
+        final discardable = DiscardableAction.create(action1);
         
 		thread.sendMessage(action);
 		

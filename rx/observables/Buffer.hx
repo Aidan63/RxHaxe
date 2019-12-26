@@ -6,67 +6,52 @@ import rx.observers.IObserver;
 import rx.Observer;
 
 typedef BufferState<T> = {
-    var list : Array<T>;
+	var list:Array<T>;
 }
 
-class Buffer<T> extends Observable<Array<T>>
-{
-    var source : IObservable<T>;
-    var count : Int;
+class Buffer<T> extends Observable<Array<T>> {
+	var source:IObservable<T>;
+	var count:Int;
 
-    public function new(_source : IObservable<T>, _count : Int)
-    {
-        super();
+	public function new(_source:IObservable<T>, _count:Int) {
+		super();
 
-        source = _source;
-        count  = _count;
-    }
+		source = _source;
+		count = _count;
+	}
 
-    override public function subscribe(_observer : IObserver<Array<T>>) : ISubscription
-    {
-        //lock
-        final state           = AtomicData.create({ list : [] });
-        final buffer_observer = Observer.create(
-            () -> {
-                //lock
-                AtomicData.update_if(
-                    (s : BufferState<T>) -> s.list.length > 0,
-                    (s : BufferState<T>) -> {
-                        _observer.onNext(s.list);
-                        return s;
-                    }, state);
-                _observer.onCompleted();
-            },
-            (_error : String) -> {
-                //lock
-                AtomicData.update_if(
-                    (s : BufferState<T>) -> s.list.length > 0,
-                    (s : BufferState<T>) -> {
-                        _observer.onNext(s.list);
-                        return s;
-                    }, state);
+	override public function subscribe(_observer:IObserver<Array<T>>):ISubscription {
+		// lock
+		final state = AtomicData.create({list: []});
+		final buffer_observer = Observer.create(() -> {
+			// lock
+			AtomicData.update_if((s : BufferState<T>) -> s.list.length > 0, (s : BufferState<T>) -> {
+				_observer.onNext(s.list);
+				return s;
+			}, state);
+			_observer.onCompleted();
+		}, (_error : String) -> {
+				// lock
+				AtomicData.update_if((s : BufferState<T>) -> s.list.length > 0, (s : BufferState<T>) -> {
+					_observer.onNext(s.list);
+					return s;
+				}, state);
 
-                _observer.onError(_error);
-            },
-            (_value : T) -> {
-                //lock
-                AtomicData.update_if(
-                    (s : BufferState<T>) -> s.list.length < count,
-                    (s : BufferState<T>) -> {
-                        s.list.push(_value);
+				_observer.onError(_error);
+			}, (_value:T) -> {
+				// lock
+				AtomicData.update_if((s : BufferState<T>) -> s.list.length < count, (s : BufferState<T>) -> {
+					s.list.push(_value);
 
-                        if (s.list.length == count)
-                        {
-                            _observer.onNext(s.list);
-                            s.list.resize(0);
-                        }
+					if (s.list.length == count) {
+						_observer.onNext(s.list);
+						s.list.resize(0);
+					}
 
-                        return s;
-                    }, state);
-            }
-        );
+					return s;
+				}, state);
+			});
 
-        return source.subscribe(buffer_observer);
-    }
+		return source.subscribe(buffer_observer);
+	}
 }
- 

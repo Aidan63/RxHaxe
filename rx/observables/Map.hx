@@ -1,31 +1,28 @@
 package rx.observables;
+
 import rx.observables.IObservable;
 import rx.disposables.ISubscription;
 import rx.observers.IObserver;
 import rx.notifiers.Notification;
 import rx.Observer;
 import rx.Utils;
+
 /*
-   */
+ */
 class Map<T, R> extends Observable<R> {
-    var _source:IObservable<T>;
-    var _f:T -> R;
+	var _source:IObservable<T>;
+	var _f:T->R;
 
-    public function new(source:IObservable<T>, f:T -> R) {
-        super();
-        _source = source;
-        _f = f;
-    }
+	public function new(source:IObservable<T>, f:T->R) {
+		super();
+		_source = source;
+		_f = f;
+	}
 
-    override public function subscribe(observer:IObserver<R>):ISubscription {
-        var map_observer = Observer.create(
-            observer.onCompleted,
-            observer.onError,
-            function(v:T) {
-                observer.onNext(_f(v));
-            }
-        );
-        return _source.subscribe(map_observer);
-    }
+	override public function subscribe(observer:IObserver<R>):ISubscription {
+		var map_observer = Observer.create(observer.onCompleted, observer.onError, function(v:T) {
+			observer.onNext(_f(v));
+		});
+		return _source.subscribe(map_observer);
+	}
 }
- 

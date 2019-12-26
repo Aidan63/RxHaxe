@@ -1,12 +1,11 @@
 package rx.schedulers;
+
 import rx.disposables.ISubscription;
-import rx.Core;
+
 interface IScheduler extends Base {
+	public function schedule_relative(_delay:Null<Float>, _action:() -> Void):ISubscription;
 
-    public function schedule_relative(delay:Null<Float>, action:Void -> Void):ISubscription;
+	public function schedule_recursive(_action:(() -> Void)->Void):ISubscription;
 
-    public function schedule_recursive(action:(Void -> Void) -> Void):ISubscription;
-
-    public function schedule_periodically(initial_delay:Null<Float>, period:Null<Float>, action:Void -> Void):ISubscription;
+	public function schedule_periodically(_initial_delay:Null<Float>, _period:Null<Float>, _action:() -> Void):ISubscription;
 }
-
