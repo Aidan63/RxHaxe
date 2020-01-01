@@ -28,10 +28,10 @@ import rx.subjects.Async;
 import sys.thread.Thread;
 
 using rx.Observable;
-using Main;
+using RxExample;
 using Safety;
 
-class Main
+class RxExample
 {
 	static function main()
 	{
