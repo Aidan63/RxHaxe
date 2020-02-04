@@ -7,18 +7,16 @@ import rx.observers.IObserver;
 import rx.disposables.SingleAssignment;
 import rx.disposables.Composite;
 
-class Amb<T> extends Observable<T> {
+class Amb<T> implements IObservable<T> {
 	final source1:IObservable<T>;
 	final source2:IObservable<T>;
 
 	public function new(_source1:IObservable<T>, _source2:IObservable<T>) {
-		super();
-
 		source1 = _source1;
 		source2 = _source2;
 	}
 
-	override public function subscribe(_observer:IObserver<T>):ISubscription {
+	public function subscribe(_observer:IObserver<T>):ISubscription {
 		if (source2 == null) {
 			return source1.subscribe(_observer);
 		}

@@ -1,5 +1,6 @@
 package rx.subjects;
 
+import rx.observables.IObservable;
 import rx.AtomicData;
 import rx.Subscription;
 import rx.Utils;
@@ -20,7 +21,7 @@ typedef ReplayState<T> = {
  * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Linq/Reactive/Subjects/ReplaySubject.cs
  * https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/subjects/ReplaySubject.java
  */
-class Replay<T> extends Observable<T> implements ISubject<T> {
+class Replay<T> implements IObservable<T> implements ISubject<T> {
 	final state:AtomicData<ReplayState<T>>;
 
 	inline function update(f)
@@ -36,8 +37,6 @@ class Replay<T> extends Observable<T> implements ISubject<T> {
 		return new Replay<T>();
 
 	function new() {
-		super();
-
 		state = AtomicData.create({
 			queue: new List<Notification<T>>(),
 			is_stopped: false,
@@ -45,7 +44,7 @@ class Replay<T> extends Observable<T> implements ISubject<T> {
 		});
 	}
 
-	override public function subscribe(_observer:IObserver<T>):ISubscription {
+	public function subscribe(_observer:IObserver<T>):ISubscription {
 		sync((_state:ReplayState<T>) -> {
 			_state.observers.push(_observer);
 

@@ -7,17 +7,16 @@ import rx.observers.IObserver;
 import rx.notifiers.Notification;
 import rx.Observer;
 
-class ElementAt<T> extends Observable<T> {
+class ElementAt<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var _index:Int;
 
 	public function new(source:IObservable<T>, index:Int) {
-		super();
 		_source = source;
 		_index = index;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		// lock
 		var counter = AtomicData.create(0);
 		var __subscription = SingleAssignment.create();

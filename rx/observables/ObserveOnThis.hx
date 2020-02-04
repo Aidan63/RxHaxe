@@ -4,21 +4,19 @@ import rx.observers.IObserver;
 import rx.disposables.ISubscription;
 import rx.schedulers.IScheduler;
 
-class ObserveOnThis<T> extends Observable<T>
+class ObserveOnThis<T> implements IObservable<T>
 {
-	final source : Observable<T>;
+	final source : IObservable<T>;
 
 	final scheduler : IScheduler;
 
-	public function new(_source : Observable<T>, _scheduler : IScheduler)
+	public function new(_source : IObservable<T>, _scheduler : IScheduler)
 	{
-		super();
-
 		source    = _source;
 		scheduler = _scheduler;
 	}
 
-    override function subscribe(_observer : IObserver<T>) : ISubscription
+    public function subscribe(_observer : IObserver<T>) : ISubscription
     {
         return source.subscribe(Observer.create(
 			() -> scheduler.schedule_absolute(null, _observer.onCompleted),

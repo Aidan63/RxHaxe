@@ -1,0 +1,16 @@
+{
+    "indentation": {
+        "character": "tab",
+        "tabWidth": 4,
+        "indentComplexValueExpressions": true,
+        "indentCaseLabels": true,
+        "conditionalPolicy": "fixedZero",
+        "indentObjectLiteral": true,
+        "trailingWhitespace": false
+    },
+    "whitespace": {
+        "addLineCommentSpace": true,
+        "arrowFunctionsPolicy": "around",
+        "colonPolicy": "after"
+    }
+}

@@ -8,17 +8,16 @@ import rx.observers.IObserver;
 import rx.notifiers.Notification;
 import rx.Observer;
 
-class SkipUntil<T> extends Observable<T> {
+class SkipUntil<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var _other:IObservable<T>;
 
 	public function new(source:IObservable<T>, other:IObservable<T>) {
-		super();
 		_source = source;
 		_other = other;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		// lock
 		var triggered = false;
 		var otherSubscription = SingleAssignment.create();

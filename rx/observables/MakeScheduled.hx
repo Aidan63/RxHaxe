@@ -7,7 +7,7 @@ import rx.notifiers.Notification;
 import rx.Observer;
 import rx.schedulers.IScheduler;
 
-class SubscribeOnThis<T> extends Observable<T> {
+class SubscribeOnThis<T> implements IObservable<T> {
 	final _source:IObservable<T>;
 
 	final scheduler:IScheduler;
@@ -15,7 +15,6 @@ class SubscribeOnThis<T> extends Observable<T> {
 	var __unsubscribe:ISubscription;
 
 	public function new(scheduler:IScheduler, source:IObservable<T>) {
-		super();
 		_source = source;
 		this.scheduler = scheduler;
 	}
@@ -23,24 +22,23 @@ class SubscribeOnThis<T> extends Observable<T> {
 	function doUnsubscribe()
 		scheduler.schedule_absolute(null, () -> __unsubscribe.unsubscribe());
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		scheduler.schedule_absolute(null, () -> __unsubscribe = _source.subscribe(observer));
 
 		return Subscription.create(doUnsubscribe);
 	}
 }
 
-class SubscribeOfEnum<T> extends Observable<T> {
+class SubscribeOfEnum<T> implements IObservable<T> {
 	var _enum:Array<T>;
 	var scheduler:IScheduler;
 
 	public function new(scheduler:IScheduler, _enum:Array<T>) {
-		super();
 		this._enum = _enum;
 		this.scheduler = scheduler;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var index:Int = 0;
 		return scheduler.schedule_recursive(function(self:Void->Void) {
 			try {
@@ -63,17 +61,16 @@ class SubscribeOfEnum<T> extends Observable<T> {
  * https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/operators/OperationInterval.java
  *
 **/
-class SubscribeInterval<T> extends Observable<T> {
+class SubscribeInterval<T> implements IObservable<T> {
 	var period:Float;
 	var scheduler:IScheduler;
 
 	public function new(scheduler:IScheduler, _period:Float) {
-		super();
 		period = _period;
 		this.scheduler = scheduler;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var counter = AtomicData.create(0);
 		var succ = function(count:Int):Int {
 			// trace(count);
@@ -93,15 +90,15 @@ class MakeScheduled implements IScheduled {
 		scheduler = _scheduler;
 	}
 
-	public function subscribe_on_this<T>(source:Observable<T>):Observable<T> {
+	public function subscribe_on_this<T>(source:IObservable<T>):IObservable<T> {
 		return new SubscribeOnThis(scheduler, source);
 	}
 
-	public function of_enum<T>(a:Array<T>):Observable<T> {
+	public function of_enum<T>(a:Array<T>):IObservable<T> {
 		return new SubscribeOfEnum(scheduler, a);
 	}
 
-	public function interval(val:Float):Observable<Int> {
+	public function interval(val:Float):IObservable<Int> {
 		return new SubscribeInterval(scheduler, val);
 	}
 }

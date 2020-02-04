@@ -9,15 +9,14 @@ import rx.Observer;
 /* Implementation based on:
  * https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/operators/OperationDematerialize.java
  */
-class Dematerialize<T> extends Observable<T> {
+class Dematerialize<T> implements IObservable<T> {
 	var _source:IObservable<Notification<T>>;
 
 	public function new(source:IObservable<Notification<T>>) {
-		super();
 		_source = source;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var materialize_observer = Observer.create(null, null, function(v:Notification<T>) {
 			switch (v) {
 				case OnCompleted:

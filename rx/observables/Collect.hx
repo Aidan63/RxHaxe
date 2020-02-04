@@ -3,18 +3,16 @@ package rx.observables;
 import rx.observers.IObserver;
 import rx.disposables.ISubscription;
 
-class Collect<T> extends Observable<Array<T>>
+class Collect<T> implements IObservable<Array<T>>
 {
-    final source : Observable<T>;
+    final source : IObservable<T>;
 
-    public function new(_source : Observable<T>)
+    public function new(_source : IObservable<T>)
     {
-        super();
-
         source = _source;
     }
 
-    override function subscribe(_observer : IObserver<Array<T>>) : ISubscription
+    public function subscribe(_observer : IObserver<Array<T>>) : ISubscription
     {
         final data = [];
         return source.subscribe(Observer.create(

@@ -7,19 +7,17 @@ import rx.observables.IObservable;
 import rx.disposables.ISubscription;
 import rx.disposables.SingleAssignment;
 
-class Last<T> extends Observable<T> {
+class Last<T> implements IObservable<T> {
 	final source:IObservable<T>;
 
 	final defaultValue:Null<T>;
 
 	public function new(_source:IObservable<T>, _defaultValue:Null<T>) {
-		super();
-
 		source = _source;
 		defaultValue = _defaultValue;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var notPublished = true;
 		var lastValue = null;
 

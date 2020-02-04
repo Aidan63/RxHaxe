@@ -11,15 +11,14 @@ import rx.Utils;
  * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Linq/Reactive/Linq/Observable/Count.cs
  *
  */
-class Length<T> extends Observable<Int> {
+class Length<T> implements IObservable<Int> {
 	var _source:IObservable<T>;
 
 	public function new(source:IObservable<T>) {
-		super();
 		_source = source;
 	}
 
-	override public function subscribe(observer:IObserver<Int>):ISubscription {
+	public function subscribe(observer:IObserver<Int>):ISubscription {
 		var counter = AtomicData.create(0);
 		var length_observer = Observer.create(function() {
 			var v = AtomicData.unsafe_get(counter);

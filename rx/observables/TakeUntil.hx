@@ -8,17 +8,16 @@ import rx.observers.IObserver;
 import rx.notifiers.Notification;
 import rx.Observer;
 
-class TakeUntil<T> extends Observable<T> {
+class TakeUntil<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var _other:IObservable<T>;
 
 	public function new(source:IObservable<T>, other:IObservable<T>) {
-		super();
 		_source = source;
 		_other = other;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var otherSubscription = SingleAssignment.create();
 		var other_observer = Observer.create(function() {
 			observer.onCompleted();

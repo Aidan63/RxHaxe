@@ -12,15 +12,14 @@ import rx.Utils;
 	* https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/operators/OperationSingle.java
 	*)
  */
-class Single<T> extends Observable<T> {
+class Single<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 
 	public function new(source:IObservable<T>) {
-		super();
 		_source = source;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var value:Null<T> = null;
 		var has_too_many_elements = false;
 		var __unsubscribe = SingleAssignment.create();

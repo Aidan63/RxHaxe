@@ -9,18 +9,16 @@ typedef BufferState<T> = {
 	var list:Array<T>;
 }
 
-class Buffer<T> extends Observable<Array<T>> {
+class Buffer<T> implements IObservable<Array<T>> {
 	var source:IObservable<T>;
 	var count:Int;
 
 	public function new(_source:IObservable<T>, _count:Int) {
-		super();
-
 		source = _source;
 		count = _count;
 	}
 
-	override public function subscribe(_observer:IObserver<Array<T>>):ISubscription {
+	public function subscribe(_observer:IObserver<Array<T>>):ISubscription {
 		// lock
 		final state = AtomicData.create({list: []});
 		final buffer_observer = Observer.create(() -> {

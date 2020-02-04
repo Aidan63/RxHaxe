@@ -10,15 +10,14 @@ import rx.Observer;
 /* Implementation based on:
  * https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/operators/OperationMaterialize.java
  */
-class Materialize<T> extends Observable<Notification<T>> {
+class Materialize<T> implements IObservable<Notification<T>> {
 	var _source:IObservable<T>;
 
 	public function new(source:IObservable<T>) {
-		super();
 		_source = source;
 	}
 
-	override public function subscribe(observer:IObserver<Notification<T>>):ISubscription {
+	public function subscribe(observer:IObserver<Notification<T>>):ISubscription {
 		var materialize_observer = Observer.create(function() {
 			observer.onNext(OnCompleted);
 			observer.onCompleted();

@@ -7,16 +7,15 @@ import rx.observers.IObserver;
 import rx.notifiers.Notification;
 import rx.Observer;
 
-class Defer<T> extends Observable<T> {
-	var _observableFactory:Void->Observable<T>;
+class Defer<T> implements IObservable<T> {
+	var _observableFactory : Void->IObservable<T>;
 
-	public function new(observableFactory:Void->Observable<T>) {
-		super();
+	public function new(observableFactory:Void->IObservable<T>) {
 		_observableFactory = observableFactory;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
-		var _source:Observable<T> = null;
+	public function subscribe(observer:IObserver<T>):ISubscription {
+		var _source:IObservable<T> = null;
 		try {
 			_source = _observableFactory();
 		} catch (ex:String) {

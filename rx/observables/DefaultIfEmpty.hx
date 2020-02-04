@@ -7,17 +7,16 @@ import rx.observers.IObserver;
 import rx.notifiers.Notification;
 import rx.Observer;
 
-class DefaultIfEmpty<T> extends Observable<T> {
+class DefaultIfEmpty<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var _defaultValue:T;
 
 	public function new(source:IObservable<T>, defaultValue:T) {
-		super();
 		_source = source;
 		_defaultValue = defaultValue;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var hasValue:Bool = false;
 		var defaultIfEmpty_observer = Observer.create(function() {
 			if (!hasValue) {

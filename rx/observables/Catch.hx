@@ -6,19 +6,17 @@ import rx.disposables.SerialAssignment;
 import rx.observers.IObserver;
 import rx.Observer;
 
-class Catch<T> extends Observable<T> {
+class Catch<T> implements IObservable<T> {
 	final source:IObservable<T>;
 
 	final errorHandler:String->IObservable<T>;
 
 	public function new(_source:IObservable<T>, _errorHandler:String->IObservable<T>) {
-		super();
-
 		source = _source;
 		errorHandler = _errorHandler;
 	}
 
-	override public function subscribe(_observer:IObserver<T>):ISubscription {
+	public function subscribe(_observer:IObserver<T>):ISubscription {
 		var serialDisposable = SerialAssignment.create();
 
 		var catch_observer = Observer.create(() -> _observer.onCompleted(), (_error : String) -> {

@@ -7,17 +7,16 @@ import rx.observers.IObserver;
 import rx.notifiers.Notification;
 import rx.Observer;
 
-class Find<T> extends Observable<T> {
+class Find<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var _predicate:T->Bool;
 
 	public function new(source:IObservable<T>, predicate:T->Bool) {
-		super();
 		_source = source;
 		_predicate = predicate;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var __subscription = SingleAssignment.create();
 		var find_observer = Observer.create(function() {
 			observer.onCompleted();

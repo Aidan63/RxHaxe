@@ -11,25 +11,25 @@ import rx.Observer;
 import rx.schedulers.IScheduler;
 
 // todo test
-class Timestamp<T> extends Observable<Timestamped<T>> {
-	var _source:IObservable<T>;
-	var _scheduler:IScheduler;
+class Timestamp<T> implements IObservable<Timestamped<T>>
+{
+	final source : IObservable<T>;
 
-	public function new(source:IObservable<T>, scheduler:IScheduler) {
-		super();
-		_source = source;
-		_scheduler = scheduler;
+	final scheduler : IScheduler;
+
+	public function new(_source : IObservable<T>, _scheduler : IScheduler)
+	{
+		source    = _source;
+		scheduler = _scheduler;
 	}
 
-	override public function subscribe(observer:IObserver<Timestamped<T>>):ISubscription {
-		var timestamp_observer = Observer.create(function() {
-			observer.onCompleted();
-		}, function(e:String) {
-			observer.onError(e);
-		}, function(v:T) {
-			observer.onNext(new Timestamped<T>(v, _scheduler.now()));
-		});
+	public function subscribe(_observer : IObserver<Timestamped<T>>) : ISubscription
+	{
+		final timestamp_observer = Observer.create(
+			_observer.onCompleted,
+			_observer.onError,
+			_v -> _observer.onNext(new Timestamped(_v, scheduler.now())));
 
-		return _source.subscribe(timestamp_observer);
+		return source.subscribe(timestamp_observer);
 	}
 }

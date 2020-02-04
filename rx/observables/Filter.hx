@@ -5,18 +5,16 @@ import rx.observables.IObservable;
 import rx.disposables.ISubscription;
 import rx.observers.IObserver;
 
-class Filter<T> extends Observable<T> {
+class Filter<T> implements IObservable<T> {
 	var source:IObservable<T>;
 	var predicate:T->Bool;
 
 	public function new(_source:IObservable<T>, _predicate:T->Bool) {
-		super();
-
 		source = _source;
 		predicate = _predicate;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var filter_observer = Observer.create(() -> observer.onCompleted(), (e : String) -> observer.onError(e), (v:T) -> {
 			var isPassed = false;
 			try {

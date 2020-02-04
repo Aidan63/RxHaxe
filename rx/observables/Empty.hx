@@ -4,12 +4,13 @@ import rx.observables.IObservable;
 import rx.disposables.ISubscription;
 import rx.observers.IObserver;
 
-class Empty<T> extends Observable<T> {
-	public function new() {
-		super();
+class Empty<T> implements IObservable<T> {
+	public function new()
+	{
+		//
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		observer.onCompleted();
 		return Subscription.empty();
 	}

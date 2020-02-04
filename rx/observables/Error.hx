@@ -4,15 +4,14 @@ import rx.observables.IObservable;
 import rx.disposables.ISubscription;
 import rx.observers.IObserver;
 
-class Error<T> extends Observable<T> {
+class Error<T> implements IObservable<T> {
 	var err:String;
 
 	public function new(err:String) {
-		super();
 		this.err = err;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		observer.onError(err);
 		return Subscription.empty();
 	}

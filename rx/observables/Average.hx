@@ -10,16 +10,14 @@ typedef AverageState = {
 	var count:Int;
 }
 
-class Average<T> extends Observable<Float> {
+class Average<T> implements IObservable<Float> {
 	final source:IObservable<T>;
 
 	public function new(_source:IObservable<T>) {
-		super();
-
 		source = _source;
 	}
 
-	override public function subscribe(observer:IObserver<Float>):ISubscription {
+	public function subscribe(observer:IObserver<Float>):ISubscription {
 		var state = AtomicData.create({sum: 0.0, count: 0});
 		var average_observer = Observer.create(() -> {
 			var s:AverageState = AtomicData.unsafe_get(state);

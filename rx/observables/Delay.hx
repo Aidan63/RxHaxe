@@ -12,19 +12,18 @@ import rx.schedulers.IScheduler;
 import rx.Subscription;
 
 // todo test
-class Delay<T> extends Observable<T> {
+class Delay<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var _scheduler:IScheduler;
 	var _dueTime:Float;
 
 	public function new(source:IObservable<T>, dueTime:Float, scheduler:IScheduler) {
-		super();
 		_source = source;
 		_dueTime = dueTime;
 		_scheduler = scheduler;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var cancelable = Composite.create();
 		var delay_observer = Observer.create(function() {}, function(error:String) {}, function(notification:Notification<T>) {
 			var d = _scheduler.schedule_absolute(_dueTime, function() {

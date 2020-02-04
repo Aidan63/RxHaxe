@@ -17,19 +17,18 @@ typedef ThrottleState<T> = {
 }
 
 // todo test
-class Throttle<T> extends Observable<T> {
+class Throttle<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var _scheduler:IScheduler;
 	var _dueTime:Int;
 
 	public function new(source:IObservable<T>, dueTime:Int, scheduler:IScheduler) {
-		super();
 		_source = source;
 		_dueTime = dueTime;
 		_scheduler = scheduler;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		// lock
 		var __subscription = Composite.create();
 		var cancelable = SerialAssignment.create();

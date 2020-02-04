@@ -1,5 +1,6 @@
 package rx;
 
+import rx.observables.IObservable;
 import rx.disposables.ISubscription;
 import rx.observers.IObserver;
 import rx.subjects.ISubject;
@@ -15,7 +16,7 @@ import rx.Utils;
  * Implementation based on :
  * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Linq/Reactive/Subjects/Subject.cs
  */
-class Subject<T> extends Observable<T> implements ISubject<T> {
+class Subject<T> implements IObservable<T> implements ISubject<T> {
 	final observers:AtomicData<Array<IObserver<T>>>;
 
 	static public function create<T>()
@@ -30,9 +31,8 @@ class Subject<T> extends Observable<T> implements ISubject<T> {
 	static public function behavior<T>(_default_value:T)
 		return Behavior.create(_default_value);
 
-	function new() {
-		super();
-
+	function new()
+		{
 		observers = AtomicData.create([]);
 	}
 
@@ -45,7 +45,7 @@ class Subject<T> extends Observable<T> implements ISubject<T> {
 	inline function iter(_f:(_observers:IObserver<T>) -> IObserver<T>)
 		return sync((os:Array<IObserver<T>>) -> os.map(_f));
 
-	override public function subscribe(_observer:IObserver<T>):ISubscription {
+	public function subscribe(_observer:IObserver<T>):ISubscription {
 		update(_obs -> {
 			_obs.push(_observer);
 

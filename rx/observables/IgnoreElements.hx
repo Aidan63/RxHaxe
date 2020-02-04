@@ -7,15 +7,14 @@ import rx.observers.IObserver;
 import rx.notifiers.Notification;
 import rx.Observer;
 
-class IgnoreElements<T> extends Observable<T> {
+class IgnoreElements<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 
 	public function new(source:IObservable<T>) {
-		super();
 		_source = source;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var ignoreElements_observer = Observer.create(function() {
 			observer.onCompleted();
 		}, function(e:String) {

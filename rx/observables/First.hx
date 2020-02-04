@@ -7,17 +7,16 @@ import rx.observers.IObserver;
 import rx.notifiers.Notification;
 import rx.Observer;
 
-class First<T> extends Observable<T> {
+class First<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var _defaultValue:Null<T>;
 
 	public function new(source:IObservable<T>, defaultValue:Null<T>) {
-		super();
 		_source = source;
 		_defaultValue = defaultValue;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var notPublished:Bool = true;
 		var first_observer = Observer.create(function() {
 			if (notPublished) {

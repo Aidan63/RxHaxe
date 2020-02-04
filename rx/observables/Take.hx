@@ -12,17 +12,16 @@ import rx.Utils;
 	* https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/operators/OperationTake.java
 	*)
  */
-class Take<T> extends Observable<T> {
+class Take<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var n:Int;
 
 	public function new(source:IObservable<T>, n:Int) {
-		super();
 		_source = source;
 		this.n = n;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		if (n < 1) {
 			var __observer = Observer.create(null, null, function(v) {});
 			var __unsubscribe = _source.subscribe(__observer);

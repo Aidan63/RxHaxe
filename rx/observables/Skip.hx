@@ -11,17 +11,16 @@ import rx.Utils;
 	* https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/operators/OperationSkip.java
 	*)
  */
-class Skip<T> extends Observable<T> {
+class Skip<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var n:Int;
 
 	public function new(source:IObservable<T>, n:Int) {
-		super();
 		_source = source;
 		this.n = n;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var counter = AtomicData.create(0);
 		var drop_observer = Observer.create(observer.onCompleted, observer.onError, function(v:T) {
 			var count = AtomicData.update_and_get(Utils.succ, counter);

@@ -19,22 +19,20 @@ typedef BehaviorState<T> = {
  * Implementation based on:
  * https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/subjects/BehaviorSubject.java
  */
-class Behavior<T> extends Observable<T> implements ISubject<T> {
+class Behavior<T> implements IObservable<T> implements ISubject<T> {
 	final state:AtomicData<BehaviorState<T>>;
 
 	static public function create<T>(_default_value:T)
 		return new Behavior<T>(_default_value);
 
 	public function new(default_value:T) {
-		super();
-
 		state = AtomicData.create({
 			last_notification: OnNext(default_value),
 			observers: []
 		});
 	}
 
-	override public function subscribe(_observer:IObserver<T>):ISubscription {
+	public function subscribe(_observer:IObserver<T>):ISubscription {
 		sync((_state:BehaviorState<T>) -> {
 			_state.observers.push(_observer);
 

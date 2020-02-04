@@ -7,17 +7,16 @@ import rx.notifiers.Notification;
 import rx.Observer;
 import rx.Utils;
 
-class DistinctUntilChanged<T> extends Observable<T> {
+class DistinctUntilChanged<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var _comparer:T->T->Bool;
 
 	public function new(source:IObservable<T>, comparer:T->T->Bool) {
-		super();
 		_source = source;
 		_comparer = comparer;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var isFirst = true;
 		var prevKey:Null<T> = null;
 		var onNextWarp = function(value:T) {

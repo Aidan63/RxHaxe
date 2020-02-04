@@ -66,6 +66,8 @@ class RxExample
 		Threads.sleep(4000);
 		var func : () -> Void = Thread.readMessage(false);
 		func();
+
+		rep.subscribeFunction(printArray);
     }
 
 	static function printArray(_array : Array<Int>)

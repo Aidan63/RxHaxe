@@ -11,15 +11,14 @@ import rx.Observer;
 	* https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/operators/OperationMerge.java
 	*)
  */
-class Merge<T> extends Observable<T> {
-	var _source:Observable<Observable<T>>;
+class Merge<T> implements IObservable<T> {
+	var _source:IObservable<IObservable<T>>;
 
-	public function new(source:Observable<Observable<T>>) {
-		super();
+	public function new(source:IObservable<IObservable<T>>) {
 		_source = source;
 	}
 
-	override public function subscribe(actual_observer:IObserver<T>):ISubscription {
+	public function subscribe(actual_observer:IObserver<T>):ISubscription {
 		var observer = Observer.synchronize(actual_observer);
 		var __unsubscribe = Composite.create();
 		var is_stopped = AtomicData.create(false);
@@ -52,17 +51,21 @@ class Merge<T> extends Observable<T> {
 				observer.onNext(v);
 		});
 
-		var parent_observer = Observer.create(function() {
-			parent_completed = true;
-			var count = AtomicData.get(child_counter);
-			stop_if_and_do((count == 0), observer.onCompleted);
-		}, observer.onError, function(observable:Observable<T>) {
-			if (!AtomicData.get(is_stopped)) {
-				AtomicData.update(Utils.succ, child_counter);
-				var child_subscription = observable.subscribe(child_observer);
-				__unsubscribe.add(child_subscription);
-			}
-		});
+		var parent_observer = Observer.create(
+			() -> {
+				parent_completed = true;
+				var count = AtomicData.get(child_counter);
+				stop_if_and_do((count == 0), observer.onCompleted);
+			},
+			observer.onError,
+			(_v : IObservable<T>) -> {
+				if (!AtomicData.get(is_stopped))
+				{
+					AtomicData.update(Utils.succ, child_counter);
+					final child_subscription = _v.subscribe(child_observer);
+					__unsubscribe.add(child_subscription);
+				}
+			});
 
 		var parent_subscription = _source.subscribe(parent_observer);
 		var subscription = Composite.create([parent_subscription, __unsubscribe]);

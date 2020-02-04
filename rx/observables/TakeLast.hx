@@ -12,17 +12,16 @@ import rx.Utils;
 	* https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/operators/OperationTakeLast.java
 	*)
  */
-class TakeLast<T> extends Observable<T> {
+class TakeLast<T> implements IObservable<T> {
 	var _source:IObservable<T>;
 	var n:Int;
 
 	public function new(source:IObservable<T>, n:Int) {
-		super();
 		_source = source;
 		this.n = n;
 	}
 
-	override public function subscribe(observer:IObserver<T>):ISubscription {
+	public function subscribe(observer:IObserver<T>):ISubscription {
 		var queue = new Array<T>();
 		var __unsubscribe = SingleAssignment.create();
 		var take_last_observer = Observer.create(function() {

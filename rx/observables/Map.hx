@@ -9,17 +9,16 @@ import rx.Utils;
 
 /*
  */
-class Map<T, R> extends Observable<R> {
+class Map<T, R> implements IObservable<R> {
 	var _source:IObservable<T>;
 	var _f:T->R;
 
 	public function new(source:IObservable<T>, f:T->R) {
-		super();
 		_source = source;
 		_f = f;
 	}
 
-	override public function subscribe(observer:IObserver<R>):ISubscription {
+	public function subscribe(observer:IObserver<R>):ISubscription {
 		var map_observer = Observer.create(observer.onCompleted, observer.onError, function(v:T) {
 			observer.onNext(_f(v));
 		});

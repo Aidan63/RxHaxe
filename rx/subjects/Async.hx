@@ -1,5 +1,6 @@
 package rx.subjects;
 
+import rx.observables.IObservable;
 import rx.disposables.ISubscription;
 import rx.observers.IObserver;
 import rx.notifiers.Notification;
@@ -15,7 +16,7 @@ typedef AsyncState<T> = {
  * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Linq/Reactive/Subjects/AsyncSubject.cs
  * https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/subjects/AsyncSubject.java
  */
-class Async<T> extends Observable<T> implements ISubject<T> {
+class Async<T> implements IObservable<T> implements ISubject<T> {
 	final state:AtomicData<AsyncState<T>>;
 
 	static public function create<T>()
@@ -42,8 +43,6 @@ class Async<T> extends Observable<T> implements ISubject<T> {
 		return sync(s -> if (!s.is_stopped) f(s));
 
 	public function new() {
-		super();
-
 		state = AtomicData.create({
 			last_notification: null,
 			is_stopped: false,
@@ -51,7 +50,7 @@ class Async<T> extends Observable<T> implements ISubject<T> {
 		});
 	}
 
-	override function subscribe(_observer:IObserver<T>):ISubscription {
+	public function subscribe(_observer:IObserver<T>):ISubscription {
 		sync((_state:AsyncState<T>) -> {
 			_state.observers.push(_observer);
 
