@@ -1,187 +1,193 @@
-package test;
 
-import rx.disposables.Boolean;
-
-import rx.disposables.Assignable;
-
-import rx.disposables.Composite;
-import rx.disposables.MultipleAssignment;
-import rx.disposables.SingleAssignment;
-import rx.disposables.ISubscription;
-
+import buddy.BuddySuite;
 import rx.Subscription;
-import rx.Thread;
-class TestSubscription extends haxe.unit.TestCase {
+import rx.disposables.Boolean;
+import rx.disposables.Composite;
+import rx.disposables.SingleAssignment;
+import rx.disposables.MultipleAssignment;
+import hx.concurrent.thread.ThreadPool;
 
-    function incr(i) return  i+1;
-    public function test_unsubscribe_only_once(){ 
-        var counter =   0 ;
-        var unsubscribe =Subscription.create (function() return counter= incr(counter));
-        unsubscribe.unsubscribe ();
-        unsubscribe.unsubscribe ();
-        assertEquals(1,counter);            
-    }
-    public function  test_boolean_subscription(){ 
-        var counter =   0 ;
-        var boolean_subscription=Boolean.create(function() return counter= incr(counter));
+using buddy.Should;
 
-        assertEquals(false, (boolean_subscription.is_unsubscribed()));
-        boolean_subscription.unsubscribe();
-        assertEquals(true ,(boolean_subscription.is_unsubscribed()));
-        boolean_subscription.unsubscribe();
-        assertEquals(true ,(boolean_subscription.is_unsubscribed()));
-        assertEquals(1,counter);  
-    }
-    public function   test_composite_subscription_success (){
-        var counter =   0 ;
-        var composite_subscription = Composite.create([] );
-        composite_subscription.add(Subscription.create (function() return counter= incr(counter)));
-        composite_subscription.add(Subscription.create (function() return counter= incr(counter)));
-        composite_subscription.unsubscribe();
-        assertEquals(2,counter);  
-    }
-
-#if cpp
-    public function  test_composite_subscription_unsubscribe_all (){
-        var counter =   0 ;
-        var composite_subscription = Composite.create([] );
-        var count = 10;    
-        var f=    function(){
-            composite_subscription.add(Subscription.create (function(){
-                 Sys.sleep(0.1*Math.random());
-                 return counter= incr(counter);}));
-            };
-        for(i in 0...count) 
-        {
-            Thread.create(f);
-        }
-        composite_subscription.unsubscribe();                    
-        Sys.sleep( 0.1);
-        assertEquals(count,counter);   
-  }
-#end
-  public function   test_composite_subscription_exception (){
-    var counter =  0 ;
-    var ex =  "failed on first one";
-    var composite_subscription  =  Composite.create([] );
-    //todo
-  //  composite_subscription.add(function () {throw ex;} );
-    composite_subscription.add(Subscription.create (function() return counter= incr(counter)));
-    try{
-        composite_subscription.unsubscribe();                
-        trace( "Expecting an exception");
-    } catch (es:String)
+class TestSubscription extends BuddySuite
+{
+    public function new()
     {
-          trace(es);
-            assertEquals(es,ex);  
-    } 
-  //(* we should still have unsubscribed to the second one *)
-     assertEquals(1,counter);   
-  }
-  public function   test_composite_subscription_remove ()
-  {
-    var s1  = Boolean.create(function(){});
-    var s2  = Boolean.create(function(){});
-    var s  =  Composite.create([] );
-    s.add( s1 );
-    s.add( s2 );
-    s.remove( s1 ); 
-    assertEquals(true,s1.is_unsubscribed());   
-    assertEquals(false,s2.is_unsubscribed());    
-  }
+        describe('subscriptions', {
+            it('will only unsubscribe once', {
+                var counter     = 0;
+                var unsubscribe = Subscription.create(() -> counter = incr(counter));
 
-    public function  test_composite_subscription_clear (){
-        var s1  = Boolean.create(function(){});
-        var s2  = Boolean.create(function(){});
-        var s  =  Composite.create([] );
-        s.add( s1 );
-        s.add( s2 );
-        assertEquals(false,s1.is_unsubscribed());   
-        assertEquals(false,s2.is_unsubscribed());   
-        s.clear();
-        assertEquals(true,s1.is_unsubscribed());   
-        assertEquals(true,s2.is_unsubscribed());   
-        assertEquals(false,s.is_unsubscribed());  
+                unsubscribe.unsubscribe();
+                unsubscribe.unsubscribe();
 
-        var s3  = Boolean.create(function(){});
-        s.add( s3 );
-        s.unsubscribe();
-        assertEquals(true,s3.is_unsubscribed());   
-        assertEquals(true,s.is_unsubscribed());  
-   }
-   
-    public function test_composite_subscription_unsubscribe_idempotence (){
-        var counter =  0 ;
-        var s  =  Composite.create([] );
-        s.add(Subscription.create (function() return counter= incr(counter)));
-        s.unsubscribe();
-        s.unsubscribe();
-        s.unsubscribe();
- // (* We should have only unsubscribed once *)
-  
-        assertEquals(1,counter);  
+                counter.should.be(1);
+            });
+
+            it('can track if a subscription has been unsubscribed', {
+                var counter     = 0;
+                var unsubscribe = Boolean.create(() -> counter = incr(counter));
+
+                unsubscribe.is_unsubscribed().should.be(false);
+                unsubscribe.unsubscribe();
+                unsubscribe.is_unsubscribed().should.be(true);
+                unsubscribe.unsubscribe();
+                unsubscribe.is_unsubscribed().should.be(true);
+                counter.should.be(1);
+            });
+
+            it('will unsubscribe from all children in a composite subscription', {
+                var counter   = 0;
+                var composite = Composite.create([]);
+
+                composite.add(Subscription.create(() -> counter = incr(counter)));
+                composite.add(Subscription.create(() -> counter = incr(counter)));
+                composite.unsubscribe();
+
+                counter.should.be(2);
+            });
+
+            it('can unsubscribe from all threaded child subscriptions in a composite subscription', {
+                var counter   = 0;
+                var maxTasks  = 10;
+                var composite = Composite.create([]);
+                var executor  = new ThreadPool(2);
+
+                for (_ in 0...maxTasks)
+                {
+                    executor.submit(_ctx -> {
+                        composite.add(Subscription.create(() -> counter = incr(counter)));
+                    });
+                }
+
+                composite.unsubscribe();
+
+                if (executor.awaitCompletion(1000))
+                {
+                    counter.should.be(maxTasks);
+                }
+                else
+                {
+                    fail('threadpool took too long to complete its tasks');
+                }
+            });
+
+            it('can remove subscriptions from a composite subscription', {
+                final composite = Composite.create();
+                final sub1 = Subscription.empty();
+                final sub2 = Subscription.empty();
+
+                composite.add(sub1);
+                composite.add(sub2);
+                composite.remove(sub1);
+
+                sub1.is_unsubscribed().should.be(true);
+                sub2.is_unsubscribed().should.be(false);
+            });
+
+            it('can clear all child subscriptions from a composite subscription', {
+                final composite = Composite.create();
+                final sub1 = Subscription.empty();
+                final sub2 = Subscription.empty();
+                final sub3 = Subscription.empty();
+
+                composite.add(sub1);
+                composite.add(sub2);
+                composite.clear();
+
+                sub1.is_unsubscribed().should.be(true);
+                sub2.is_unsubscribed().should.be(true);
+                composite.is_unsubscribed().should.be(false);
+
+                composite.add(sub3);
+                composite.unsubscribe();
+
+                sub3.is_unsubscribed().should.be(true);
+                composite.is_unsubscribed().should.be(true);
+            });
+
+            it('will not unsubscribe composite subscriptions if they have already been unsubscribed', {
+                var counter   = 0;
+                var composite = Composite.create();
+
+                composite.add(Subscription.create(() -> counter = incr(counter)));
+                composite.unsubscribe();
+                composite.unsubscribe();
+                composite.unsubscribe();
+
+                counter.should.be(1);
+            });
+
+            it('will not unsubscribe composite subscriptions if they have already been unsubscribed even when called from another thread', {
+                var counter   = 0;
+                var maxTasks  = 10;
+                var composite = Composite.create([ Subscription.create(() -> counter = incr(counter)) ]);
+                var executor  = new ThreadPool(2);
+
+                for (_ in 0...maxTasks)
+                {
+                    executor.submit(_ctx -> {
+                        composite.unsubscribe();
+                    });
+                }
+
+                if (executor.awaitCompletion(1000))
+                {
+                    counter.should.be(1);
+                }
+                else
+                {
+                    fail('threadpool took too long to complete its tasks');
+                }
+            });
+
+            it('will remember the previous unsubscribed state when assigning new subscriptions to a multi assignment object', {
+                final multiple = MultipleAssignment.create(Subscription.empty());
+
+                var unsubscribed1 = false;
+                var subscription1 = Subscription.create(() -> unsubscribed1 = true);
+
+                multiple.set(subscription1);
+                multiple.is_unsubscribed().should.be(false);
+
+                var unsubscribed2 = false;
+                var subscription2 = Subscription.create(() -> unsubscribed2 = true);
+                
+                multiple.set(subscription2);
+                multiple.is_unsubscribed().should.be(false);
+                unsubscribed1.should.be(false);
+
+                multiple.unsubscribe();
+                multiple.is_unsubscribed().should.be(true);
+                unsubscribed2.should.be(true);
+
+                var unsubscribed3 = false;
+                var subscription3 = Subscription.create(() -> unsubscribed3 = true);
+
+                multiple.set(subscription3);
+                multiple.is_unsubscribed().should.be(true);
+                unsubscribed3.should.be(true);
+            });
+
+            it('will throw an exception when trying to re-assign a single subscription', {
+                final single = SingleAssignment.create();
+
+                var unsubscribed1 = false;
+                var subscription1 = Subscription.create(() -> unsubscribed1 = true);
+
+                single.set(subscription1);
+                single.is_unsubscribed().should.be(false);
+
+                var unsubscribed2 = false;
+                var subscription2 = Subscription.create(() -> unsubscribed2 = true);
+
+                single.set.bind(subscription2).should.throwValue('SingleAssignment');
+
+                unsubscribed2.should.be(false);
+                subscription2.is_unsubscribed().should.be(false);
+            });
+        });
     }
 
-    #if cpp
- public function test_composite_subscription_unsubscribe_idempotence_concurrently(){
-    var counter =  0 ;
-    var s  =  Composite.create([] );
-    s.add(Subscription.create (function() return counter= incr(counter)));
-    var count = 10 ;    
-
-    for(i in 0...count) 
-    {
-        Thread.create(s.unsubscribe);
-    }
-
-// (* We should have only unsubscribed once *)
-    Sys.sleep( 0.1);
-    assertEquals(1,counter);   
-}
-  #end
-public function  test_multiple_assignment_subscription(){
-    var m =MultipleAssignment.create(Subscription.empty());
-    var unsub1 =  false;
-    var s1 = Subscription.create (function () return unsub1 = true);
-    m.set(s1);
-    assertEquals( false,m.is_unsubscribed());
-    var unsub2 =   false;
-    var s2 = Subscription.create (function () return unsub2 = true);
-    m.set(s2);
-    assertEquals(  false, m.is_unsubscribed());
-    assertEquals(  false, unsub1);
-    m.unsubscribe();
-    assertEquals( true ,unsub2);
-    assertEquals( true ,m.is_unsubscribed());
-    var unsub3 =   false;
-    var s3 = Subscription.create (function () return unsub3 = true);
-    m.set(s3);
-    assertEquals( true ,unsub3);
-    assertEquals( true ,m.is_unsubscribed());
-}
-
-public function  test_single_assignment_subscription(){
-    var m = SingleAssignment.create();
-    var unsub1 =   false;
-    var s1 = Subscription.create (function () return unsub1 = true) ;
-    m.set(s1);
-
-    assertEquals( false,m.is_unsubscribed());
-    var unsub2 =   false;
-    var s2 = Subscription.create (function () return unsub2 = true);
-    try{
-        m.set(s2);
-        trace( "Should raise an exception");
-    }catch(e:String){
-        assertEquals (e, "SingleAssignment");
-    }
-    
-    assertEquals(  false ,m.is_unsubscribed());
-    assertEquals(  false ,unsub1);
-    m.unsubscribe();
-    assertEquals(  true ,unsub1);
-    assertEquals(  false ,unsub2);
-    assertEquals(  true ,m.is_unsubscribed());
-}
-
+    function incr(i) return i++;
 }

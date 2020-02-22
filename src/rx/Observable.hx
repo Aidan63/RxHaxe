@@ -180,7 +180,7 @@ final class Observable<T> implements IObservable<T>
 	static public function amb<T>(_observable1:IObservable<T>, _observable2:IObservable<T>)
 		return new Amb(_observable1, _observable2);
 
-	static public function average<T>(_observable:IObservable<T>)
+	static public function average<T : Float & Int>(_observable:IObservable<T>)
 		return new Average(_observable);
 
 	static public function materialize<T>(_observable:IObservable<T>)

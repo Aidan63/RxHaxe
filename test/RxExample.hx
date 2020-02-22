@@ -1,4 +1,3 @@
-package;
 
 import rx.observers.IObserver;
 import rx.schedulers.IScheduler;

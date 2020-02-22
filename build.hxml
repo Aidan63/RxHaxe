@@ -1,12 +1,10 @@
--cp ./
+-cp src
+-cp test
 
 -lib haxe-concurrent
 -lib safety
+-lib buddy
 
 -D threads
 
--cpp bin
-
-#--macro nullSafety('rx')
-
---main RxExample
+--main Test
