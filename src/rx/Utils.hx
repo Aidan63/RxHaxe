@@ -1,7 +1,6 @@
 package rx;
 
 import haxe.Timer;
-import hx.concurrent.thread.Threads;
 import rx.Subscription;
 import rx.observers.IObserver;
 import rx.disposables.ISubscription;
@@ -14,7 +13,7 @@ class Utils {
 			_final();
 
 			return result;
-		} catch (_error:String) {
+		} catch (_error: String) {
 			_final();
 
 			throw _error;
@@ -27,7 +26,7 @@ class Utils {
 		return _observers.filter(o -> o != _observer);
 
 	static public function create_sleeping_action(action:Void->Void, exec_time:Float, now:Void->Float):Void->ISubscription {
-		#if sys
+#if sys
 		return () -> {
 			final delay = Math.floor((exec_time - now()));
 
@@ -38,7 +37,7 @@ class Utils {
 
 			return Subscription.empty();
 		}
-		#else
+#else
 		return () -> {
 			var t:Null<Timer> = null;
 			var delay:Int = Math.floor((exec_time - now()));
@@ -52,11 +51,15 @@ class Utils {
 					t.stop();
 			});
 		}
-		#end
+#end
 	}
 
 	inline static public function current_thread_id()
-		return Threads.current;
+#if (target.threaded)
+		return sys.thread.Thread.current();
+#else
+		return 0;
+#end
 
 	static public function pred(i)
 		return i - 1;

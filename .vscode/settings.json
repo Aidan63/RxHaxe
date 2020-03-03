@@ -3,5 +3,12 @@
         "windows": "node_modules\\.bin\\haxe.cmd",
         "osx": "node_modules/.bin/haxe",
         "linux": "node_modules/.bin/haxe"
-    }
+    },
+    "haxe.configurations": [
+        [
+            "build.hxml",
+            "--cpp",
+            "bin/cpp"
+        ]
+    ]
 }

@@ -5,6 +5,4 @@
 -lib safety
 -lib buddy
 
--D threads
-
 --main Test

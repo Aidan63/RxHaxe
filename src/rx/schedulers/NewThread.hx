@@ -2,7 +2,6 @@ package rx.schedulers;
 
 import haxe.Timer;
 import rx.disposables.ISubscription;
-import rx.Core;
 import hx.concurrent.thread.Threads;
 
 class NewThreadBase implements Base {
@@ -18,7 +17,11 @@ class NewThreadBase implements Base {
 		}
 		var action1 = Utils.create_sleeping_action(action, due_time, now);
 		var discardable = DiscardableAction.create(action1);
+#if (target.threaded)
 		Threads.spawn(discardable.action);
+#else
+		discardable.action();
+#end
 		return discardable.unsubscribe();
 	}
 }
