@@ -4,18 +4,20 @@ import haxe.Timer;
 import rx.disposables.ISubscription;
 import hx.concurrent.thread.Threads;
 
-class NewThreadBase implements Base {
+class NewThreadBase implements Base
+{
 	public function new() {}
 
-	public function now():Float {
-		return Timer.stamp();
-	}
+	public function now() return Timer.stamp();
 
-	public function schedule_absolute(due_time:Null<Float>, action:Void->Void):ISubscription {
-		if (due_time == null) {
+	public function schedule_absolute(due_time : Float, action : Void->Void) : ISubscription
+	{
+		if (due_time == 0)
+		{
 			due_time = now();
 		}
-		var action1 = Utils.create_sleeping_action(action, due_time, now);
+
+		var action1     = Utils.create_sleeping_action(action, due_time, now);
 		var discardable = DiscardableAction.create(action1);
 #if (target.threaded)
 		Threads.spawn(discardable.action);
@@ -26,8 +28,10 @@ class NewThreadBase implements Base {
 	}
 }
 
-class NewThread extends MakeScheduler {
-	public function new() {
+class NewThread extends MakeScheduler
+{
+	public function new()
+	{
 		super(new NewThreadBase());
 	}
 }

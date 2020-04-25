@@ -2,28 +2,32 @@ package rx.schedulers;
 
 import haxe.Timer;
 import rx.disposables.ISubscription;
-import rx.Core;
 
-class ImmediateBase implements Base {
+class ImmediateBase implements Base
+{
 	public function new() {}
 
-	public function now():Float {
-		return Timer.stamp();
-	}
+	public function now() return Timer.stamp();
 
-	public function schedule_absolute(due_time:Null<Float>, action:Void->Void):ISubscription {
-		if (due_time == null) {
-			due_time = now();
+	public function schedule_absolute(due_time : Float, action : Void->Void) : ISubscription
+	{
+		if (due_time == 0)
+		{
+			action();
+
+			return Subscription.empty();
 		}
-
-		var action1 = Utils.create_sleeping_action(action, due_time, now);
-
-		return action1();
+		else
+		{
+			return Utils.create_sleeping_action(action, due_time, now)();
+		}
 	}
 }
 
-class Immediate extends MakeScheduler {
-	public function new() {
+class Immediate extends MakeScheduler
+{
+	public function new()
+	{
 		super(new ImmediateBase());
 	}
 }

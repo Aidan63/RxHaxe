@@ -2,27 +2,27 @@ package rx.schedulers;
 
 import rx.disposables.ISubscription;
 
-using Safety;
-
 /**
  * Implementation based on:
  * /usr/local/src/RxJava/rxjava-core/src/main/java/rx/schedulers/TestScheduler.java
  */
-class TestBase implements Base {
-	final queue:List<TimedAction>;
+class TestBase implements Base
+{
+	final queue : List<TimedAction>;
 
-	var time:Float;
+	var time : Float;
 
-	public function new() {
+	public function new()
+	{
 		queue = new List<TimedAction>();
-		time = 0;
+		time  = 0;
 	}
 
-	public function now():Float
-		return time;
+	public function now() return time;
 
-	public function schedule_absolute(_dueTime:Null<Float>, _action:() -> Void):ISubscription {
-		final execTime = _dueTime.or(now());
+	public function schedule_absolute(_dueTime : Float, _action : () -> Void) : ISubscription
+	{
+		final execTime          = _dueTime == 0 ? now() : _dueTime;
 		final discardableAction = DiscardableAction.create(() -> {
 			_action();
 			return Subscription.empty();
@@ -33,8 +33,10 @@ class TestBase implements Base {
 		return discardableAction.unsubscribe();
 	}
 
-	public function trigger_actions(_targetTime:Float) {
-		while (!queue.isEmpty()) {
+	public function trigger_actions(_targetTime:Float)
+	{
+		while (!queue.isEmpty())
+		{
 			final timedAction = queue.first();
 			if (timedAction.execTime > _targetTime)
 				break;
@@ -48,41 +50,60 @@ class TestBase implements Base {
 	}
 
 	public function trigger_actions_until_now()
+	{
 		trigger_actions(time);
+	}
 
-	public function advance_time_to(_delay:Float)
+	public function advance_time_to(_delay : Float)
+	{
 		trigger_actions(_delay);
+	}
 
-	public function advance_time_by(_delay:Float)
+	public function advance_time_by(_delay : Float)
+	{
 		trigger_actions(time + _delay);
+	}
 
-	public function reset() {
+	public function reset()
+	{
 		queue.clear();
 		time = 0;
 	}
 }
 
-class Test extends MakeScheduler {
-	final testScheduler:TestBase;
+class Test extends MakeScheduler
+{
+	final testScheduler : TestBase;
 
-	public function new() {
+	public function new()
+	{
 		super(new TestBase());
 
 		testScheduler = cast baseScheduler;
 	}
 
 	public function trigger_actions(_targetTime)
+	{
 		testScheduler.trigger_actions(_targetTime);
+	}
 
 	public function trigger_actions_until_now()
+	{
 		testScheduler.trigger_actions_until_now();
+	}
 
 	public function advance_time_to(_delay)
+	{
 		testScheduler.advance_time_to(_delay);
+	}
 
 	public function advance_time_by(_delay)
+	{
 		testScheduler.advance_time_by(_delay);
+	}
 
 	public function reset()
+	{
 		testScheduler.reset();
+	}
 }
