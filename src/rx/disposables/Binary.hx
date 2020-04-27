@@ -1,31 +1,55 @@
 package rx.disposables;
 
-import rx.disposables.ISubscription;
-import rx.Subscription;
+/**
+ * Subscription which contains two child subscriptions.
+ * When unsubscribing both children are unsubscribed.
+ */
+class Binary implements ISubscription
+{
+	/**
+	 * Stores the unsubscribed state of the two subscriptions.
+	 */
+	final state : AtomicData<Bool>;
 
-class Binary implements ISubscription {
-	var state:AtomicData<Bool>;
-	var first:ISubscription;
-	var second:ISubscription;
+	/**
+	 * The first disposable subscription.
+	 */
+	final first : ISubscription;
 
-	public function unsubscribe() {
-		var was_unsubscribed = AtomicData.compare_and_set(false, true, state);
-		if (!was_unsubscribed) {
+	/**
+	 * The second disposable subscription.
+	 */
+	final second : ISubscription;
+
+	/**
+	 * Creates a new binary subscription from two existing subscriptions.
+	 * @param _first First subscription.
+	 * @param _second Second subscription.
+	 */
+	public function new(_first : ISubscription, _second : ISubscription)
+	{
+		first  = _first;
+		second = _second;
+		state  = new AtomicData(false);
+	}
+
+	/**
+	 * Disposes of this subscription, unsubscribing from both of the child subscriptions.
+	 */
+	public function unsubscribe()
+	{
+		final wasUnsubscribed = state.compare_and_set(false, true);
+		if (!wasUnsubscribed)
+		{
 			first.unsubscribe();
 			second.unsubscribe();
 		}
 	}
 
-	static public function create(first:ISubscription, second:ISubscription) {
-		return new Binary(first, second);
-	}
-
-	public function new(first:ISubscription, second:ISubscription) {
-		this.first = first;
-		this.second = second;
-		state = AtomicData.create(false);
-	}
-
-	public function is_unsubscribed():Bool
-		return AtomicData.unsafe_get(state);
+	/**
+	 * Gets the current children subscription state.
+	 * @return true if currently subscribed, false otherwise.
+	 */
+	public function isUnsubscribed()
+		return state.unsafe_get();
 }

@@ -1,8 +1,8 @@
 import buddy.BuddySuite;
 import rx.Subscription;
+import rx.disposables.Binary;
 import rx.disposables.Boolean;
 import rx.disposables.Composite;
-import rx.disposables.SingleAssignment;
 import rx.disposables.MultipleAssignment;
 
 using buddy.Should;
@@ -22,19 +22,19 @@ class TestSubscription extends BuddySuite {
 
 			it('can track if a subscription has been unsubscribed', {
 				var counter = 0;
-				var unsubscribe = Boolean.create(() -> counter++);
+				var unsubscribe = new Boolean(() -> counter++);
 
-				unsubscribe.is_unsubscribed().should.be(false);
+				unsubscribe.isUnsubscribed().should.be(false);
 				unsubscribe.unsubscribe();
-				unsubscribe.is_unsubscribed().should.be(true);
+				unsubscribe.isUnsubscribed().should.be(true);
 				unsubscribe.unsubscribe();
-				unsubscribe.is_unsubscribed().should.be(true);
+				unsubscribe.isUnsubscribed().should.be(true);
 				counter.should.be(1);
 			});
 
 			it('will unsubscribe from all children in a composite subscription', {
 				var counter = 0;
-				var composite = Composite.create([]);
+				var composite = new Composite();
 
 				composite.add(Subscription.create(() -> counter++));
 				composite.add(Subscription.create(() -> counter++));
@@ -47,7 +47,7 @@ class TestSubscription extends BuddySuite {
 			it('can unsubscribe from all threaded child subscriptions in a composite subscription', {
 				var counter = 0;
 				var maxTasks = 10;
-				var composite = Composite.create([]);
+				var composite = new Composite();
 				var executor = new hx.concurrent.thread.ThreadPool(2);
 
 				for (_ in 0...maxTasks) {
@@ -67,7 +67,7 @@ class TestSubscription extends BuddySuite {
 #end
 
 			it('can remove subscriptions from a composite subscription', {
-				final composite = Composite.create();
+				final composite = new Composite();
 				final sub1 = Subscription.empty();
 				final sub2 = Subscription.empty();
 
@@ -75,12 +75,12 @@ class TestSubscription extends BuddySuite {
 				composite.add(sub2);
 				composite.remove(sub1);
 
-				sub1.is_unsubscribed().should.be(true);
-				sub2.is_unsubscribed().should.be(false);
+				sub1.isUnsubscribed().should.be(true);
+				sub2.isUnsubscribed().should.be(false);
 			});
 
 			it('can clear all child subscriptions from a composite subscription', {
-				final composite = Composite.create();
+				final composite = new Composite();
 				final sub1 = Subscription.empty();
 				final sub2 = Subscription.empty();
 				final sub3 = Subscription.empty();
@@ -89,20 +89,20 @@ class TestSubscription extends BuddySuite {
 				composite.add(sub2);
 				composite.clear();
 
-				sub1.is_unsubscribed().should.be(true);
-				sub2.is_unsubscribed().should.be(true);
-				composite.is_unsubscribed().should.be(false);
+				sub1.isUnsubscribed().should.be(true);
+				sub2.isUnsubscribed().should.be(true);
+				composite.isUnsubscribed().should.be(false);
 
 				composite.add(sub3);
 				composite.unsubscribe();
 
-				sub3.is_unsubscribed().should.be(true);
-				composite.is_unsubscribed().should.be(true);
+				sub3.isUnsubscribed().should.be(true);
+				composite.isUnsubscribed().should.be(true);
 			});
 
 			it('will not unsubscribe composite subscriptions if they have already been unsubscribed', {
 				var counter = 0;
-				var composite = Composite.create();
+				var composite = new Composite();
 
 				composite.add(Subscription.create(() -> counter++));
 				composite.unsubscribe();
@@ -116,7 +116,7 @@ class TestSubscription extends BuddySuite {
 			it('will not unsubscribe composite subscriptions if they have already been unsubscribed even when called from another thread', {
 				var counter = 0;
 				var maxTasks = 10;
-				var composite = Composite.create([Subscription.create(() -> counter++)]);
+				var composite = new Composite([ Subscription.create(() -> counter++) ]);
 				var executor = new hx.concurrent.thread.ThreadPool(2);
 
 				for (_ in 0...maxTasks) {
@@ -134,49 +134,31 @@ class TestSubscription extends BuddySuite {
 #end
 
 			it('will remember the previous unsubscribed state when assigning new subscriptions to a multi assignment object', {
-				final multiple = MultipleAssignment.create(Subscription.empty());
+				final multiple = new MultipleAssignment(Subscription.empty());
 
 				var unsubscribed1 = false;
 				var subscription1 = Subscription.create(() -> unsubscribed1 = true);
 
 				multiple.set(subscription1);
-				multiple.is_unsubscribed().should.be(false);
+				multiple.isUnsubscribed().should.be(false);
 
 				var unsubscribed2 = false;
 				var subscription2 = Subscription.create(() -> unsubscribed2 = true);
 
 				multiple.set(subscription2);
-				multiple.is_unsubscribed().should.be(false);
+				multiple.isUnsubscribed().should.be(false);
 				unsubscribed1.should.be(false);
 
 				multiple.unsubscribe();
-				multiple.is_unsubscribed().should.be(true);
+				multiple.isUnsubscribed().should.be(true);
 				unsubscribed2.should.be(true);
 
 				var unsubscribed3 = false;
 				var subscription3 = Subscription.create(() -> unsubscribed3 = true);
 
 				multiple.set(subscription3);
-				multiple.is_unsubscribed().should.be(true);
+				multiple.isUnsubscribed().should.be(true);
 				unsubscribed3.should.be(true);
-			});
-
-			it('will throw an exception when trying to re-assign a single subscription', {
-				final single = SingleAssignment.create();
-
-				var unsubscribed1 = false;
-				var subscription1 = Subscription.create(() -> unsubscribed1 = true);
-
-				single.set(subscription1);
-				single.is_unsubscribed().should.be(false);
-
-				var unsubscribed2 = false;
-				var subscription2 = Subscription.create(() -> unsubscribed2 = true);
-
-				single.set.bind(subscription2).should.throwValue('SingleAssignment');
-
-				unsubscribed2.should.be(false);
-				subscription2.is_unsubscribed().should.be(false);
 			});
 		});
 	}

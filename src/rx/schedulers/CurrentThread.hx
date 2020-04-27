@@ -9,10 +9,11 @@ class CurrentThreadBase implements Base
 
 	public function new()
 	{
-		async = AsyncLock.create();
+		async = new AsyncLock();
 	}
 
-	public function now() return Timer.stamp();
+	public function now()
+		return Timer.stamp();
 
 	public function enqueue(_action : () -> Void, _execTime : Float)
 	{
@@ -22,7 +23,7 @@ class CurrentThreadBase implements Base
 		}
 		catch (_error : String)
 		{
-			async = AsyncLock.create();
+			async = new AsyncLock();
 
 			throw _error;
 		}
@@ -32,7 +33,7 @@ class CurrentThreadBase implements Base
 	{
 		final dueAt       = _dueTime == 0 ? now() : _dueTime;
 		final action1     = Utils.create_sleeping_action(_action, dueAt, now);
-		final discardable = DiscardableAction.create(action1);
+		final discardable = new DiscardableAction(action1);
 
 		enqueue(discardable.action, dueAt);
 

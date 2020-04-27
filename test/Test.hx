@@ -1,7 +1,7 @@
 
 import buddy.Buddy;
 
-class Test implements Buddy<[ TestSubscription ]>
+class Test implements Buddy<[ TestSubscription, TestAtomicData ]>
 {
     //
 }

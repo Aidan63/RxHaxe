@@ -6,3 +6,5 @@
 -lib buddy
 
 --main Test
+
+--cpp test/bin

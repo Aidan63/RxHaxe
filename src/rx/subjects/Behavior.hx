@@ -10,33 +10,25 @@ import rx.subjects.ISubject;
 import rx.disposables.ISubscription;
 import rx.notifiers.Notification;
 
-typedef BehaviorState<T> = {
-	var last_notification:Notification<T>;
-	var observers:Array<IObserver<T>>;
-}
-
 /**
  * Implementation based on:
  * https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/subjects/BehaviorSubject.java
  */
-class Behavior<T> implements IObservable<T> implements ISubject<T> {
-	final state:AtomicData<BehaviorState<T>>;
+@:generic class Behavior<T> implements IObservable<T> implements ISubject<T>
+{
+	final state : AtomicData<BehaviorState<T>>;
 
-	static public function create<T>(_default_value:T)
-		return new Behavior<T>(_default_value);
-
-	public function new(default_value:T) {
-		state = AtomicData.create({
-			last_notification: OnNext(default_value),
-			observers: []
-		});
+	public function new(defaultValue : T)
+	{
+		state = new AtomicData(new BehaviorState(OnNext(defaultValue), []));
 	}
 
-	public function subscribe(_observer:IObserver<T>):ISubscription {
-		sync((_state:BehaviorState<T>) -> {
-			_state.observers.push(_observer);
+	public function subscribe(_observer : IObserver<T>) : ISubscription
+	{
+		sync(state -> {
+			state.observers.push(_observer);
 
-			switch _state.last_notification {
+			switch state.lastNotification {
 				case OnCompleted:
 					_observer.onCompleted();
 				case OnError(e):
@@ -47,47 +39,66 @@ class Behavior<T> implements IObservable<T> implements ISubject<T> {
 		});
 
 		return Subscription.create(() -> {
-			update((_state:BehaviorState<T>) -> {
-				_state.observers = Utils.unsubscribe_observer(_observer, _state.observers);
+			update(state -> {
+				state.observers.remove(_observer);
 
-				return _state;
+				return state;
 			});
 		});
 	}
 
 	public function unsubscribe()
-		update((_state:BehaviorState<T>) -> {
-			_state.observers = [];
-			return _state;
+		update(state -> {
+			state.observers.resize(0);
+
+			return state;
 		});
 
 	public function onCompleted()
-		sync((_state:BehaviorState<T>) -> {
-			_state.last_notification = OnCompleted;
-			for (iter in _state.observers) {
-				iter.onCompleted();
+		sync(state -> {
+			state.lastNotification = OnCompleted;
+			for (observable in state.observers)
+			{
+				observable.onCompleted();
 			}
 		});
 
-	public function onError(_error:String)
-		sync((_state:BehaviorState<T>) -> {
-			_state.last_notification = OnError(_error);
-			for (iter in _state.observers) {
-				iter.onError(_error);
+	public function onError(_error : String)
+		sync(state -> {
+			state.lastNotification = OnError(_error);
+
+			for (observable in state.observers)
+			{
+				observable.onError(_error);
 			}
 		});
 
-	public function onNext(_value:T)
-		sync((_state:BehaviorState<T>) -> {
-			_state.last_notification = OnNext(_value);
-			for (iter in _state.observers) {
-				iter.onNext(_value);
+	public function onNext(_value : T)
+		sync(state -> {
+			state.lastNotification = OnNext(_value);
+
+			for (observable in state.observers)
+			{
+				observable.onNext(_value);
 			}
 		});
 
-	inline function update(f)
-		return AtomicData.update(f, state);
+	function update(_func : (BehaviorState<T>)->BehaviorState<T>)
+		return state.update(_func);
 
-	inline function sync(f)
-		return AtomicData.synchronize(f, state);
+	function sync<B>(_func : (_in : BehaviorState<T>) -> B)
+		return state.synchronize(_func);
+}
+
+@:generic private class BehaviorState<T>
+{
+	public var lastNotification : Notification<T>;
+
+	public final observers : Array<IObserver<T>>;
+
+	public function new(_lastNotification, _observers)
+	{
+		lastNotification = _lastNotification;
+		observers        = _observers;
+	}
 }

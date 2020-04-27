@@ -1,59 +1,67 @@
 package rx.disposables;
 
-import rx.disposables.ISubscription;
-import rx.Subscription;
-
 typedef RxAssignableState = {
-	var is_unsubscribed:Bool;
-	@:optional var subscription:ISubscription;
+	var isUnsubscribed : Bool;
+	var subscription : Null<ISubscription>;
 }
 
-class AssignableState {
-	static public function unsubscribe(state) {
-		state.is_unsubscribed = true;
-	}
+/**
+ * Base re-assignable subscription type.
+ * Should not be called itself, ability to re-assign the subscription is only availble when inheriting this class.
+ * When the subscription is re-assigned the subscribed state persists.
+ * If a new subscription is assigned and the old one had previously been disposed, unsubscribe will immediately be called on the newly assigned subscription.
+ */
+class Assignable implements ISubscription
+{
+	final state : AtomicData<RxAssignableState>;
 
-	static public function set(state, subscription:ISubscription) {
-		state.subscription = subscription;
-	}
-}
-
-class Assignable implements ISubscription {
-	var state:AtomicData<RxAssignableState>;
-
-	public function is_unsubscribed() {
-		var s = AtomicData.unsafe_get(state);
-		return s.is_unsubscribed;
-	}
-
-	public function unsubscribe() {
-		var old_state = AtomicData.update_if((function(s:RxAssignableState) return !s.is_unsubscribed), (function(s:RxAssignableState) {
-			AssignableState.unsubscribe(s);
-			return s;
-		}), state);
-
-		var was_unsubscribed = old_state.is_unsubscribed;
-		var subscription = old_state.subscription;
-		if (!was_unsubscribed && subscription != null)
-			subscription.unsubscribe();
-	}
-
-	static public function create() {
-		return new Assignable();
-	}
-
-	public function new(?subscription) {
-		state = AtomicData.create({
-			is_unsubscribed: false,
-			subscription: subscription
+	public function new(_subscription : Null<ISubscription> = null)
+	{
+		state = new AtomicData({
+			isUnsubscribed : false,
+			subscription : _subscription
 		});
 	}
 
-	public function __set(old_state:RxAssignableState, subscription:ISubscription) {
-		// todo
+	/**
+	 * Returns if the current assigned subscription is active.
+	 * @return True if currently subscribed, false otherwise.
+	 */
+	public function isUnsubscribed()
+		return state.unsafe_get().isUnsubscribed;
 
-		var was_unsubscribed = old_state.is_unsubscribed;
-		if (was_unsubscribed)
+	/**
+	 * Dispose of the current active subscription.
+	 */
+	public function unsubscribe()
+	{
+		final oldState = state.update_if(
+			s -> !s.isUnsubscribed,
+			s -> {
+				s.isUnsubscribed = true;
+				return s;
+			});
+
+		final was_unsubscribed = oldState.isUnsubscribed;
+		final subscription     = oldState.subscription;
+
+		if (!was_unsubscribed && subscription != null)
+		{
 			subscription.unsubscribe();
+		}
+	}
+
+	/**
+	 * Call when replacing the assigned subscription.
+	 * @param _oldState The old subscription state.
+	 * @param _subscription The new subscription object.
+	 */
+	function __set(_oldState : RxAssignableState, _subscription : ISubscription)
+	{
+		var was_unsubscribed = _oldState.isUnsubscribed;
+		if (was_unsubscribed)
+		{
+			_subscription.unsubscribe();
+		}
 	}
 }

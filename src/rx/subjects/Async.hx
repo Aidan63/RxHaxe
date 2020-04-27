@@ -5,25 +5,73 @@ import rx.disposables.ISubscription;
 import rx.observers.IObserver;
 import rx.notifiers.Notification;
 
-typedef AsyncState<T> = {
-	var ?last_notification:Notification<T>;
-	var is_stopped:Bool;
-	var observers:Array<IObserver<T>>;
-}
-
 /**
  * Implementation based on:
  * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Linq/Reactive/Subjects/AsyncSubject.cs
  * https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/subjects/AsyncSubject.java
  */
-class Async<T> implements IObservable<T> implements ISubject<T> {
-	final state:AtomicData<AsyncState<T>>;
+@:generic class Async<T> implements IObservable<T> implements ISubject<T>
+{
+	final state : AtomicData<AsyncState<T>>;
 
-	static public function create<T>()
-		return new Async<T>();
+	public function new()
+	{
+		state = new AtomicData(new AsyncState<T>(null, false, []));
+	}
 
-	function emit_last_notification(_observer:IObserver<T>, _state:AsyncState<T>)
-		switch _state.last_notification {
+	public function subscribe(_observer : IObserver<T>) : ISubscription
+	{
+		sync(state -> {
+			state.observers.push(_observer);
+
+			if (state.isStopped)
+			{
+				emit_last_notification(_observer, state);
+			}
+		});
+
+		return Subscription.create(() -> {
+			update(state -> {
+				state.observers.remove(_observer);
+
+				return state;
+			});
+		});
+	}
+
+	public function unsubscribe()
+		update(state -> {
+			state.observers.resize(0);
+			return state;
+		});
+
+	public function onCompleted()
+		if_not_stopped(state -> {
+			state.isStopped = true;
+			for (observer in state.observers)
+			{
+				emit_last_notification(observer, state);
+			}
+		});
+
+	public function onError(_error : String)
+		if_not_stopped(state -> {
+			state.isStopped        = true;
+			state.lastNotification = OnError(_error);
+
+			for (observer in state.observers)
+			{
+				observer.onError(_error);
+			}
+		});
+
+	public function onNext(_next : T)
+		if_not_stopped(state -> {
+			state.lastNotification = OnNext(_next);
+		});
+
+	function emit_last_notification(_observer : IObserver<T>, _state : AsyncState<T>)
+		switch _state.lastNotification {
 			case OnCompleted:
 				throw "Bug in AsyncSubject: should not store  notification .OnCompleted as last notificaition";
 			case OnError(e):
@@ -33,66 +81,28 @@ class Async<T> implements IObservable<T> implements ISubject<T> {
 				_observer.onCompleted();
 		}
 
-	inline function update(f)
-		return AtomicData.update(f, state);
+	function update(_func : AsyncState<T>->AsyncState<T>)
+		return state.update(_func);
 
-	inline function sync(f)
-		return AtomicData.synchronize(f, state);
+	function sync<B>(_func : AsyncState<T>->B)
+		return state.synchronize(_func);
 
-	inline function if_not_stopped(f)
-		return sync(s -> if (!s.is_stopped) f(s));
+	function if_not_stopped<B>(_func : AsyncState<T>->B)
+		return sync(s -> if (!s.isStopped) _func(s));
+}
 
-	public function new() {
-		state = AtomicData.create({
-			last_notification: null,
-			is_stopped: false,
-			observers: []
-		});
+@:generic private class AsyncState<T>
+{
+	public var lastNotification : Null<Notification<T>>;
+
+	public var isStopped : Bool;
+
+	public final observers : Array<IObserver<T>>;
+
+	public function new(_lastNotification, _isStopped, _observers)
+	{
+		lastNotification = _lastNotification;
+		isStopped        = _isStopped;
+		observers        = _observers;
 	}
-
-	public function subscribe(_observer:IObserver<T>):ISubscription {
-		sync((_state:AsyncState<T>) -> {
-			_state.observers.push(_observer);
-
-			if (_state.is_stopped) {
-				emit_last_notification(_observer, _state);
-			}
-		});
-
-		return Subscription.create(() -> {
-			update((_state:AsyncState<T>) -> {
-				_state.observers = Utils.unsubscribe_observer(_observer, _state.observers);
-
-				return _state;
-			});
-		});
-	}
-
-	public function unsubscribe()
-		update((_state:AsyncState<T>) -> {
-			_state.observers = [];
-			return _state;
-		});
-
-	public function onCompleted()
-		if_not_stopped((_state:AsyncState<T>) -> {
-			_state.is_stopped = true;
-			for (iter in _state.observers) {
-				emit_last_notification(iter, _state);
-			}
-		});
-
-	public function onError(_error:String)
-		if_not_stopped((_state:AsyncState<T>) -> {
-			_state.is_stopped = true;
-			_state.last_notification = OnError(_error);
-			for (iter in _state.observers) {
-				iter.onError(_error);
-			}
-		});
-
-	public function onNext(v:T)
-		if_not_stopped((_state:AsyncState<T>) -> {
-			_state.last_notification = OnNext(v);
-		});
 }

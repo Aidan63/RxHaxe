@@ -7,7 +7,8 @@ class ImmediateBase implements Base
 {
 	public function new() {}
 
-	public function now() return Timer.stamp();
+	public function now()
+		return Timer.stamp();
 
 	public function schedule_absolute(due_time : Float, action : Void->Void) : ISubscription
 	{

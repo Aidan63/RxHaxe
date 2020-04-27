@@ -16,33 +16,34 @@ import rx.Utils;
  * Implementation based on :
  * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Linq/Reactive/Subjects/Subject.cs
  */
-class Subject<T> implements IObservable<T> implements ISubject<T> {
+@:generic class Subject<T> implements IObservable<T> implements ISubject<T>
+{
 	final observers:AtomicData<Array<IObserver<T>>>;
 
 	static public function create<T>()
 		return new Subject<T>();
 
 	static public function async<T>()
-		return Async.create();
+		return new Async<T>();
 
 	static public function replay<T>()
-		return Replay.create();
+		return new Replay<T>();
 
-	static public function behavior<T>(_default_value:T)
-		return Behavior.create(_default_value);
+	static public function behavior<T>(_default_value : T)
+		return new Behavior(_default_value);
 
 	function new()
-		{
-		observers = AtomicData.create([]);
+	{
+		observers = new AtomicData<Array<IObserver<T>>>([]);
 	}
 
-	inline function update(f:Array<IObserver<T>>->Array<IObserver<T>>)
-		return AtomicData.update(f, observers);
+	function update(f:Array<IObserver<T>>->Array<IObserver<T>>)
+		return observers.update(f);
 
-	inline function sync(f:Array<IObserver<T>>->Array<IObserver<T>>)
-		return AtomicData.synchronize(f, observers);
+	function sync(f:Array<IObserver<T>>->Array<IObserver<T>>)
+		return observers.synchronize(f);
 
-	inline function iter(_f:(_observers:IObserver<T>) -> IObserver<T>)
+	function iter(_f:(_observers:IObserver<T>) -> IObserver<T>)
 		return sync((os:Array<IObserver<T>>) -> os.map(_f));
 
 	public function subscribe(_observer:IObserver<T>):ISubscription {
@@ -56,7 +57,7 @@ class Subject<T> implements IObservable<T> implements ISubject<T> {
 	}
 
 	public function unsubscribe()
-		AtomicData.set([], observers);
+		observers.set([]);
 
 	public function onCompleted()
 		iter((_observer:IObserver<T>) -> {

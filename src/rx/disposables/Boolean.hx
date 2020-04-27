@@ -1,30 +1,40 @@
 package rx.disposables;
 
-import rx.disposables.ISubscription;
-import rx.Subscription;
+/**
+ * Basic idempotent subscription type which invokes a function when unsubscribed.
+ */
+class Boolean implements ISubscription
+{
+	var state : AtomicData<Bool>;
 
-class Boolean implements ISubscription {
-	/* Implementation based on:
-	 * https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/subscriptions/ISubscription.java
+	var action : ()->Void;
+	
+	/**
+	 * Create a new boolean subscription which will call the provided function when unsubscribed.
+	 * @param _action Function to call when this subscription is unsubscribed.
 	 */
-	var state:AtomicData<Bool>;
-	var _unsubscribe:Void->Void;
-
-	public function unsubscribe() {
-		var was_unsubscribed = AtomicData.compare_and_set(false, true, state);
-		if (!was_unsubscribed)
-			_unsubscribe();
+	public function new(_action : ()->Void)
+	{
+		action = _action;
+		state  = new AtomicData(false);
 	}
 
-	static public function create(unsubscribe:Void->Void) {
-		return new Boolean(unsubscribe);
+	/**
+	 * Disposes of this subscription, invoking the function if it is still subscribed.
+	 */
+	public function unsubscribe()
+	{
+		final wasUnsubscribed = state.compare_and_set(false, true);
+		if (!wasUnsubscribed)
+		{
+			action();
+		}
 	}
 
-	public function new(unsubscribe:Void->Void) {
-		_unsubscribe = unsubscribe;
-		state = AtomicData.create(false);
-	}
-
-	public function is_unsubscribed():Bool
-		return AtomicData.unsafe_get(state);
+	/**
+	 * Gets the current subscription state.
+	 * @return true if currently subscribed, false otherwise.
+	 */
+	public function isUnsubscribed()
+		return state.unsafe_get();
 }

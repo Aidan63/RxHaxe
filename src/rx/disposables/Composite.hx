@@ -1,104 +1,134 @@
 package rx.disposables;
 
-import rx.disposables.ISubscription;
+using Safety;
 
 typedef RxCompositeState = {
-	var is_unsubscribed:Bool;
-	var subscriptions:Array<ISubscription>;
+	var isUnsubscribed : Bool;
+	var subscriptions : Array<ISubscription>;
 }
 
-class CompositeState {
-	static public function unsubscribe(state:RxCompositeState) {
-		state.is_unsubscribed = true;
+/**
+ * Composite subscriptions can manage any number of child subscriptions.
+ * The overall state of the composite subscription is maintained and propagated to all child subscriptions added.
+ */
+class Composite implements ISubscription
+{
+	var state : AtomicData<RxCompositeState>;
+
+	public function new(_subscriptions : Array<ISubscription> = null)
+	{
+		state = new AtomicData({
+			isUnsubscribed : false,
+			subscriptions  : _subscriptions.or([])
+		});
 	}
 
-	static public function add(state:RxCompositeState, subscription:ISubscription) {
-		state.subscriptions.push(subscription);
-	}
-
-	static public function remove(state:RxCompositeState, subscription:ISubscription) {
-		state.subscriptions = state.subscriptions.filter(function(s:ISubscription) return s != subscription);
-	}
-
-	static public function clear(state:RxCompositeState) {
-		state.subscriptions = [];
-	}
-}
-
-class Composite implements ISubscription {
-	/* Implementation based on:
-	 * https://github.com/Netflix/RxJava/blob/master/rxjava-core/src/main/java/rx/subscriptions/CompositeSubscription.java
+	/**
+	 * Gets the current subscription state.
+	 * @return true if currently subscribed, false otherwise.
 	 */
-	var state:AtomicData<RxCompositeState>;
+	public function isUnsubscribed()
+		return state.unsafe_get().isUnsubscribed;
 
-	static public function create(?subscriptions:Array<ISubscription>) {
-		return new Composite(subscriptions);
-	}
+	/**
+	 * Disposes of this subscription, and all child subscriptions.
+	 */
+	public function unsubscribe()
+	{
+		final oldState = state.update_if(
+			s -> !s.isUnsubscribed,
+			s -> {
+				s.isUnsubscribed = true;
+				return s;
+			});
+		final wasUnsubscribed = oldState.isUnsubscribed;
+		final subscriptions   = oldState.subscriptions;
 
-	public function new(?_subscriptions:Array<ISubscription>) {
-		var stat:RxCompositeState = {
-			is_unsubscribed: false,
-			subscriptions: _subscriptions != null ? _subscriptions : new Array<ISubscription>()
-		};
-		state = AtomicData.create(stat);
-	}
-
-	public function is_unsubscribed() {
-		return AtomicData.unsafe_get(state).is_unsubscribed;
-	}
-
-	public function unsubscribe() {
-		var old_state = AtomicData.update_if((function(s:RxCompositeState) return !s.is_unsubscribed), (function(s:RxCompositeState) {
-			CompositeState.unsubscribe(s);
-			return s;
-		}), state);
-		var was_unsubscribed = old_state.is_unsubscribed;
-		var subscriptions = old_state.subscriptions;
-
-		if (!was_unsubscribed)
+		if (!wasUnsubscribed)
+		{
 			unsubscribe_from_all(subscriptions);
+		}
 	}
 
-	public function unsubscribe_from_all(subscriptions:Array<ISubscription>) {
-		var exceptions = Lambda.fold(subscriptions, function(_unsubscribe:ISubscription, exns:Array<String>) {
-			try {
-				_unsubscribe.unsubscribe();
-			} catch (e:String) {
-				exns.push(e);
+	/**
+	 * Adds a child subscription if the composite subscription has not been disposed.
+	 * If the composite subscription has already been disposed the provided subscription will not be added, but it will be unsubscribed.
+	 * @param _subscription Subscription to be managed by the composite subscription.
+	 */
+	public function add(_subscription : ISubscription)
+	{
+		final oldState = state.update_if(
+			s -> !s.isUnsubscribed,
+			s -> {
+				s.subscriptions.push(_subscription);
+				return s;
+			});
+
+		if (oldState.isUnsubscribed)
+		{
+			_subscription.unsubscribe();
+		}
+	}
+
+	/**
+	 * Remove the provided subscription from the composite if it has not yet had its subscription disposed.
+	 * @param _subscription Subscription to remove.
+	 */
+	public function remove(_subscription : ISubscription)
+	{
+		final oldState = state.update_if(
+			s -> !s.isUnsubscribed,
+			s -> {
+				s.subscriptions = s.subscriptions.filter(s -> s != _subscription);
+				return s;
+			});
+
+		if (!oldState.isUnsubscribed)
+		{
+			_subscription.unsubscribe();
+		}
+	}
+
+	/**
+	 * Remove all child subscriptions from this composite subscription.
+	 * If this composite subscription was not disposed of then the child subscriptions will not be. 
+	 */
+	public function clear()
+	{
+		final oldState = state.update_if(
+			s -> !s.isUnsubscribed,
+			s -> {
+				s.subscriptions = [];
+				return s;
+			});
+		
+		final wasUnsubscribed = oldState.isUnsubscribed;
+		final subscriptions   = oldState.subscriptions;
+
+		if (!wasUnsubscribed)
+		{
+			unsubscribe_from_all(subscriptions);
+		}
+	}
+
+	function unsubscribe_from_all(_subscriptions : Array<ISubscription>)
+	{
+		final exceptions = Lambda.fold(_subscriptions, (unsubscribe : ISubscription, excp : Array<String>) -> {
+			try
+			{
+				unsubscribe.unsubscribe();
 			}
-			return exns;
+			catch (exception : String)
+			{
+				excp.push(exception);
+			}
+
+			return excp;
 		}, []);
 
 		if (exceptions.length > 0)
+		{
 			throw exceptions.toString();
-	}
-
-	public function add(subscription:ISubscription) {
-		var old_state = AtomicData.update_if((function(s:RxCompositeState) return !s.is_unsubscribed), (function(s:RxCompositeState) {
-			CompositeState.add(s, subscription);
-			return s;
-		}), state);
-		if (old_state.is_unsubscribed)
-			subscription.unsubscribe();
-	}
-
-	public function remove(subscription:ISubscription) {
-		var old_state = AtomicData.update_if((function(s:RxCompositeState) return !s.is_unsubscribed), (function(s:RxCompositeState) {
-			CompositeState.remove(s, subscription);
-			return s;
-		}), state);
-		if (!old_state.is_unsubscribed)
-			subscription.unsubscribe();
-	}
-
-	public function clear() {
-		var old_state = AtomicData.update_if((function(s:RxCompositeState) return !s.is_unsubscribed), (function(s:RxCompositeState) {
-			CompositeState.clear(s);
-			return s;
-		}), state);
-		var was_unsubscribed = old_state.is_unsubscribed;
-		var subscriptions = old_state.subscriptions;
-		if (!was_unsubscribed)
-			unsubscribe_from_all(subscriptions);
+		}
 	}
 }

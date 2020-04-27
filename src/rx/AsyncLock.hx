@@ -1,74 +1,81 @@
 package rx;
 
-import rx.AtomicData;
-
 typedef RxAsyncLockState = {
-	var queue:List<Void->Void>;
-	var is_acquired:Bool;
-	var has_faulted:Bool;
+	var queue : Array<()->Void>;
+	var isAcquired : Bool;
+	var hasFaulted : Bool;
 }
 
-class AsyncLock {
-	final lock:AtomicData<RxAsyncLockState>;
+class AsyncLock
+{
+	final lock : AtomicData<RxAsyncLockState>;
 
-	public function new() {
-		var async:RxAsyncLockState = {
-			queue: new List<Void->Void>(),
-			is_acquired: false,
-			has_faulted: false
-		}
-
-		lock = AtomicData.create(async);
+	public function new()
+	{
+		lock = new AtomicData({
+			queue      : new Array<()->Void>(),
+			isAcquired : false,
+			hasFaulted : false
+		});
 	}
 
-	static public function create()
-		return new AsyncLock();
-
 	public function dispose()
-		AtomicData.update(l -> {
-			l.queue.clear();
-			l.has_faulted = true;
+		lock.update(l -> {
+			l.queue.resize(0);
+			l.hasFaulted = true;
 			return l;
-		}, lock);
+		});
 
-	public function wait(_action:() -> Void) {
-		final old_state = AtomicData.update_if((l : RxAsyncLockState) -> !l.has_faulted, (l : RxAsyncLockState) -> {
-			l.queue.push(_action);
-			l.is_acquired = true;
+	public function wait(_action:() -> Void)
+	{
+		final oldState = lock.update_if(
+			l -> !l.hasFaulted,
+			l -> {
+				l.queue.push(_action);
+				l.isAcquired = true;
 
-			return l;
-		}, lock);
+				return l;
+			});
 
-		final is_owner = !old_state.is_acquired;
+		final isOwner = !oldState.isAcquired;
 
-		if (is_owner) {
-			while (true) {
-				var work = AtomicData.synchronize(l -> {
-					if (l.queue.isEmpty()) {
-						var value = l -> {
-							l.is_acquired = false;
+		if (isOwner)
+		{
+			while (true)
+			{
+				final work = lock.synchronize(l -> {
+					if (l.queue.length == 0)
+					{
+						final value = (l : RxAsyncLockState) -> {
+							l.isAcquired = false;
 							return l;
-						}
-							(lock.data);
+						};
 
-						AtomicData.unsafe_set(value, cast lock);
+						lock.unsafe_set(value(lock.unsafe_get()));
 
 						return null;
-					} else {
+					}
+					else
+					{
 						return l.queue.pop();
 					}
-				}, lock);
+				});
 
-				if (work != null) {
-					var w = work;
-					try {
-						w();
-					} catch (_error:String) {
+				if (work != null)
+				{
+					try
+					{
+						work();
+					}
+					catch (_error : String)
+					{
 						dispose();
 
 						throw _error;
 					}
-				} else {
+				}
+				else
+				{
 					break;
 				}
 			}

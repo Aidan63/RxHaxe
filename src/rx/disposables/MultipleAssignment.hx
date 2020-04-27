@@ -1,24 +1,24 @@
 package rx.disposables;
 
-import rx.disposables.Assignable.RxAssignableState;
-import rx.disposables.Assignable.AssignableState;
-import rx.disposables.Assignable;
-import rx.Subscription;
+/**
+ * Subscription that allows changing the underlying subscription object.
+ */
+class MultipleAssignment extends Assignable
+{
+	/**
+	 * Change the subscription.
+	 * @param _subscription New subscription object.
+	 */
+	public function set(_subscription : ISubscription)
+	{
+		final oldState = state.update_if(
+			s -> !s.isUnsubscribed,
+			s -> {
+				s.subscription = _subscription;
 
-class MultipleAssignment extends Assignable {
-	public function new(subscription:ISubscription) {
-		super(subscription);
-	}
-
-	static public function create(subscription:ISubscription) {
-		return new MultipleAssignment(subscription);
-	}
-
-	public function set(subscription:ISubscription) {
-		var old_state = AtomicData.update_if(function(s:RxAssignableState) return !s.is_unsubscribed, function(s) {
-			AssignableState.set(s, subscription);
-			return s;
-		}, state);
-		__set(old_state, subscription);
+				return s;
+			});
+		
+		__set(oldState, _subscription);
 	}
 }

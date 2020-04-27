@@ -6,20 +6,29 @@ class DiscardableAction
 {
 	var state : AtomicData<DiscardableActionState>;
 
-	static public function create(_action : () -> ISubscription) : DiscardableAction
+	public function new(_action : () -> ISubscription)
 	{
-		return new DiscardableAction(_action);
+		state = new AtomicData(new DiscardableActionState(true, Subscription.empty(), null));
+		state.update(
+			(_state : DiscardableActionState) -> {
+				_state.action      = _action;
+				_state.unSubscribe = Subscription.create(() -> state.update((_otherState : DiscardableActionState) -> {
+					_otherState.ready = false;
+					return _otherState;
+				}));
+
+				return _state;
+			});
 	}
 
 	public function was_ready()
 	{
-		final oldState = AtomicData.update_if(
+		final oldState = state.update_if(
 			(_s : DiscardableActionState) -> _s.ready,
 			(_s : DiscardableActionState) -> {
 				_s.ready = false;
 				return _s;
-			},
-			state);
+			});
 
 		return oldState.ready;
 	}
@@ -28,33 +37,16 @@ class DiscardableAction
 	{
 		if (was_ready())
 		{
-			AtomicData.update(
+			state.update(
 				(_s : DiscardableActionState) -> {
 					_s.unSubscribe = _s.action();
 					return _s;
-				},
-				state);
+				});
 		}
 	}
 
-	public function unsubscribe() return AtomicData.unsafe_get(state).unSubscribe;
-
-	function new(_action : () -> ISubscription)
-	{
-		state = AtomicData.create(new DiscardableActionState(true, Subscription.empty(), null));
-
-		AtomicData.update(
-			(_s : DiscardableActionState) -> {
-				_s.action      = _action;
-				_s.unSubscribe = Subscription.create(() -> AtomicData.update((_s1 : DiscardableActionState) -> {
-					_s1.ready = false;
-					return _s1;
-				}, state));
-
-				return _s;
-			},
-			state);
-	}
+	public function unsubscribe()
+		return state.unsafe_get().unSubscribe;
 }
 
 private class DiscardableActionState

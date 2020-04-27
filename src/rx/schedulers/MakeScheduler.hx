@@ -51,7 +51,7 @@ class MakeScheduler implements IScheduler
 
 	public function schedule_periodically(_initialDelay : Float, _period : Float, _action : () -> Void) : ISubscription
 	{
-		final completed = AtomicData.create(false);
+		final completed = new AtomicData(false);
 		final delay     = _initialDelay;
 
 		final parentSubscription = Composite.create([]);
@@ -60,14 +60,14 @@ class MakeScheduler implements IScheduler
 		parentSubscription.add(unsubscribe);
 
 		return Subscription.create(() -> {
-			AtomicData.set(true, completed);
+			completed.set(true);
 			parentSubscription.unsubscribe();
 		});
 	}
 
 	function loop(_completed : AtomicData<Bool>, _period : Float, _action : () -> Void, _parent : Composite)
 	{
-		if (!AtomicData.unsafe_get(_completed))
+		if (!_completed.unsafe_get())
 		{
 			final startedAt = now();
 
