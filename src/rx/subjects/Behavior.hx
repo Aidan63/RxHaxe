@@ -1,9 +1,5 @@
 package rx.subjects;
 
-import rx.AtomicData;
-import rx.Subscription;
-import rx.Utils;
-import rx.Observable;
 import rx.observables.IObservable;
 import rx.observers.IObserver;
 import rx.subjects.ISubject;

@@ -21,7 +21,7 @@ import rx.notifiers.Notification;
 
 	public function subscribe(_observer : IObserver<T>) : ISubscription
 	{
-		sync(state -> {
+		state.synchronize(state -> {
 			state.observers.push(_observer);
 
 			if (state.isStopped)
@@ -31,7 +31,7 @@ import rx.notifiers.Notification;
 		});
 
 		return Subscription.create(() -> {
-			update(state -> {
+			state.update(state -> {
 				state.observers.remove(_observer);
 
 				return state;
@@ -40,7 +40,7 @@ import rx.notifiers.Notification;
 	}
 
 	public function unsubscribe()
-		update(state -> {
+		state.update(state -> {
 			state.observers.resize(0);
 			return state;
 		});
@@ -73,7 +73,7 @@ import rx.notifiers.Notification;
 	function emit_last_notification(_observer : IObserver<T>, _state : AsyncState<T>)
 		switch _state.lastNotification {
 			case OnCompleted:
-				throw "Bug in AsyncSubject: should not store  notification .OnCompleted as last notificaition";
+				throw "Bug in AsyncSubject: should not store notification OnCompleted as last notificaition";
 			case OnError(e):
 				_observer.onError(e);
 			case OnNext(v):
@@ -81,14 +81,8 @@ import rx.notifiers.Notification;
 				_observer.onCompleted();
 		}
 
-	function update(_func : AsyncState<T>->AsyncState<T>)
-		return state.update(_func);
-
-	function sync<B>(_func : AsyncState<T>->B)
-		return state.synchronize(_func);
-
 	function if_not_stopped<B>(_func : AsyncState<T>->B)
-		return sync(s -> if (!s.isStopped) _func(s));
+		return state.synchronize(s -> if (!s.isStopped) _func(s));
 }
 
 @:generic private class AsyncState<T>

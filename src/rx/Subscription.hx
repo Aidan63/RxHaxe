@@ -2,7 +2,8 @@ package rx;
 
 import rx.disposables.Boolean;
 
-class Subscription {
+class Subscription
+{
 	/**
 	 * Create a basic subscription which will not perform any action when unsubscribed.
 	 * @return Boolean subscription.
@@ -16,6 +17,6 @@ class Subscription {
 	 * @param _unsubscribe Function to call on un-subscription.
 	 * @return Boolean subscription.
 	 */
-	inline static public function create(_unsubscribe:() -> Void)
+	inline static public function create(_unsubscribe : () -> Void)
 		return new Boolean(_unsubscribe);
 }

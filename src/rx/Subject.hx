@@ -18,7 +18,7 @@ import rx.Utils;
  */
 @:generic class Subject<T> implements IObservable<T> implements ISubject<T>
 {
-	final observers:AtomicData<Array<IObserver<T>>>;
+	final observers : AtomicData<Array<IObserver<T>>>;
 
 	static public function create<T>()
 		return new Subject<T>();
@@ -37,16 +37,17 @@ import rx.Utils;
 		observers = new AtomicData<Array<IObserver<T>>>([]);
 	}
 
-	function update(f:Array<IObserver<T>>->Array<IObserver<T>>)
-		return observers.update(f);
+	function update(_func : Array<IObserver<T>>->Array<IObserver<T>>)
+		return observers.update(_func);
 
-	function sync(f:Array<IObserver<T>>->Array<IObserver<T>>)
-		return observers.synchronize(f);
+	function sync(_func : Array<IObserver<T>>->Array<IObserver<T>>)
+		return observers.synchronize(_func);
 
-	function iter(_f:(_observers:IObserver<T>) -> IObserver<T>)
-		return sync((os:Array<IObserver<T>>) -> os.map(_f));
+	function iter(_func : (_observers : IObserver<T>) -> IObserver<T>)
+		return sync(os -> os.map(_func));
 
-	public function subscribe(_observer:IObserver<T>):ISubscription {
+	public function subscribe(_observer : IObserver<T>):ISubscription
+	{
 		update(_obs -> {
 			_obs.push(_observer);
 
@@ -60,19 +61,19 @@ import rx.Utils;
 		observers.set([]);
 
 	public function onCompleted()
-		iter((_observer:IObserver<T>) -> {
+		iter(_observer -> {
 			_observer.onCompleted();
 			return _observer;
 		});
 
 	public function onError(_e:String)
-		iter((_observer:IObserver<T>) -> {
+		iter(_observer -> {
 			_observer.onError(_e);
 			return _observer;
 		});
 
 	public function onNext(_v:T)
-		iter((_observer:IObserver<T>) -> {
+		iter(_observer -> {
 			_observer.onNext(_v);
 			return _observer;
 		});
