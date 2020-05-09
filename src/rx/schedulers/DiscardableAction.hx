@@ -2,32 +2,42 @@ package rx.schedulers;
 
 import rx.disposables.ISubscription;
 
+typedef DiscardableActionState = {
+	var ready : Bool;
+	var unSubscribe : ISubscription;
+	var action : Null<Void->ISubscription>;
+}
+
 class DiscardableAction
 {
 	var state : AtomicData<DiscardableActionState>;
 
 	public function new(_action : () -> ISubscription)
 	{
-		state = new AtomicData(new DiscardableActionState(true, Subscription.empty(), null));
+		state = new AtomicData<DiscardableActionState>({
+			ready       : true,
+			unSubscribe : Subscription.empty(),
+			action      : null
+		});
 		state.update(
-			(_state : DiscardableActionState) -> {
-				_state.action      = _action;
-				_state.unSubscribe = Subscription.create(() -> state.update((_otherState : DiscardableActionState) -> {
+			s -> {
+				s.action      = _action;
+				s.unSubscribe = Subscription.create(() -> state.update(_otherState -> {
 					_otherState.ready = false;
 					return _otherState;
 				}));
 
-				return _state;
+				return s;
 			});
 	}
 
-	public function was_ready()
+	public function wasReady()
 	{
 		final oldState = state.update_if(
-			(_s : DiscardableActionState) -> _s.ready,
-			(_s : DiscardableActionState) -> {
-				_s.ready = false;
-				return _s;
+			s -> s.ready,
+			s -> {
+				s.ready = false;
+				return s;
 			});
 
 		return oldState.ready;
@@ -35,30 +45,15 @@ class DiscardableAction
 
 	public function action()
 	{
-		if (was_ready())
+		if (wasReady())
 		{
 			state.update(
-				(_s : DiscardableActionState) -> {
-					_s.unSubscribe = _s.action();
-					return _s;
+				s -> {
+					s.unSubscribe = s.action();
+					return s;
 				});
 		}
 	}
 
-	public function unsubscribe()
-		return state.unsafe_get().unSubscribe;
-}
-
-private class DiscardableActionState
-{
-	public var ready : Bool;
-	public var unSubscribe : ISubscription;
-	public var action : Null<Void->ISubscription>;
-
-	public function new(_ready, _unSubscribe, _action)
-	{
-		ready       = _ready;
-		unSubscribe = _unSubscribe;
-		action      = _action;
-	}
+	public function unsubscribe() return state.unsafe_get().unSubscribe;
 }

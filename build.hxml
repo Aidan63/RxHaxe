@@ -5,6 +5,6 @@
 -lib safety
 -lib buddy
 
---main Test
+--main RxPlayground
 
 --cpp test/bin

@@ -25,31 +25,37 @@ class Utils {
 	inline static public function unsubscribe_observer<T>(_observer:IObserver<T>, _observers:Array<IObserver<T>>):Array<IObserver<T>>
 		return _observers.filter(o -> o != _observer);
 
-	static public function create_sleeping_action(action:Void->Void, exec_time:Float, now:Void->Float):Void->ISubscription {
+	static public function createSleepingAction(_action : () -> Void, _execTime : Float, _now : Float) : () -> ISubscription
+	{
 #if sys
 		return () -> {
-			final delay = Math.floor((exec_time - now()));
+			final delay = Math.floor(_execTime - _now);
 
 			if (delay > 0)
+			{
 				Sys.sleep(delay);
+			}
 
-			action();
+			_action();
 
 			return Subscription.empty();
 		}
 #else
 		return () -> {
-			var t:Null<Timer> = null;
-			var delay:Int = Math.floor((exec_time - now()));
-			if (delay > 0) {
-				t = Timer.delay(action, delay * 1000);
-			} else {
-				action();
+			final delay = Math.floor(_execTime - _now);
+
+			if (delay > 0)
+			{
+				final t = Timer.delay(_action, delay * 1000);
+
+				return Subscription.create(() -> t.stop());
 			}
-			return Subscription.create(function() {
-				if (t != null)
-					t.stop();
-			});
+			else
+			{
+				_action();
+
+				return Subscription.empty();
+			}
 		}
 #end
 	}

@@ -1,12 +1,50 @@
 package rx.schedulers;
 
+import rx.schedulers.ISchedulerBase.ScheduledWork;
 import rx.disposables.ISubscription;
+
+class TestScheduler extends MakeScheduler
+{
+	final testScheduler : TestBase;
+
+	public function new()
+	{
+		super(new TestBase());
+
+		testScheduler = cast baseScheduler;
+	}
+
+	public function trigger_actions(_targetTime)
+	{
+		testScheduler.trigger_actions(_targetTime);
+	}
+
+	public function trigger_actions_until_now()
+	{
+		testScheduler.trigger_actions_until_now();
+	}
+
+	public function advance_time_to(_delay)
+	{
+		testScheduler.advance_time_to(_delay);
+	}
+
+	public function advance_time_by(_delay)
+	{
+		testScheduler.advance_time_by(_delay);
+	}
+
+	public function reset()
+	{
+		testScheduler.reset();
+	}
+}
 
 /**
  * Implementation based on:
  * /usr/local/src/RxJava/rxjava-core/src/main/java/rx/schedulers/TestScheduler.java
  */
-class TestBase implements Base
+private class TestBase implements ISchedulerBase
 {
 	final queue : List<TimedAction>;
 
@@ -20,10 +58,10 @@ class TestBase implements Base
 
 	public function now() return time;
 
-	public function schedule_absolute(_dueTime : Float, _action : () -> Void) : ISubscription
+	public function scheduleAbsolute(_dueTime : Float, _action : ScheduledWork) : ISubscription
 	{
 		final execTime          = _dueTime == 0 ? now() : _dueTime;
-		final discardableAction = DiscardableAction.create(() -> {
+		final discardableAction = new DiscardableAction(() -> {
 			_action();
 			return Subscription.empty();
 		});
@@ -68,42 +106,5 @@ class TestBase implements Base
 	{
 		queue.clear();
 		time = 0;
-	}
-}
-
-class Test extends MakeScheduler
-{
-	final testScheduler : TestBase;
-
-	public function new()
-	{
-		super(new TestBase());
-
-		testScheduler = cast baseScheduler;
-	}
-
-	public function trigger_actions(_targetTime)
-	{
-		testScheduler.trigger_actions(_targetTime);
-	}
-
-	public function trigger_actions_until_now()
-	{
-		testScheduler.trigger_actions_until_now();
-	}
-
-	public function advance_time_to(_delay)
-	{
-		testScheduler.advance_time_to(_delay);
-	}
-
-	public function advance_time_by(_delay)
-	{
-		testScheduler.advance_time_by(_delay);
-	}
-
-	public function reset()
-	{
-		testScheduler.reset();
 	}
 }

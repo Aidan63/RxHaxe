@@ -1,11 +1,13 @@
 package rx.schedulers;
 
+import rx.schedulers.ISchedulerBase.ScheduledWork;
+
 class TimedAction
 {
-	public final discardableAction : () -> Void;
+	public final discardableAction : ScheduledWork;
 	public final execTime : Float;
 
-	public function new(_discardableAction : () -> Void, _execTime : Float)
+	public function new(_discardableAction : ScheduledWork, _execTime : Float)
 	{
 		discardableAction = _discardableAction;
 		execTime          = _execTime;
