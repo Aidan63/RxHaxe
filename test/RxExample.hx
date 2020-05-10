@@ -3,7 +3,6 @@ import rx.schedulers.IScheduler;
 import rx.schedulers.DiscardableAction;
 import rx.Utils;
 import haxe.Timer;
-import hx.concurrent.thread.Threads;
 import rx.Subscription;
 import rx.schedulers.NewThreadScheduler;
 import rx.disposables.ISubscription;
