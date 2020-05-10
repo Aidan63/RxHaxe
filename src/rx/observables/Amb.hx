@@ -28,14 +28,14 @@ class Amb<T> implements IObservable<T>
 
 	public function subscribe(_observer : IObserver<T>) : ISubscription
 	{
-		final subscriptionA = SingleAssignment.create();
-		final subscriptionB = SingleAssignment.create();
+		final subscriptionA = new SingleAssignment();
+		final subscriptionB = new SingleAssignment();
 
-		final unsubscribe = Composite.create();
+		final unsubscribe = new Composite();
 		unsubscribe.add(subscriptionA);
 		unsubscribe.add(subscriptionB);
 
-		final observerA = Observer.create(
+		final observerA = new Observer(
 			() -> {
 				subscriptionB.unsubscribe();
 				_observer.onCompleted();
@@ -48,7 +48,7 @@ class Amb<T> implements IObservable<T>
 				subscriptionB.unsubscribe();
 				_observer.onNext(value);
 			});
-		final observerB = Observer.create(
+		final observerB = new Observer(
 			() -> {
 				subscriptionA.unsubscribe();
 				_observer.onCompleted();

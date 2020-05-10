@@ -19,13 +19,13 @@ class Length<T> implements IObservable<Int> {
 	}
 
 	public function subscribe(observer:IObserver<Int>):ISubscription {
-		var counter = AtomicData.create(0);
-		var length_observer = Observer.create(function() {
-			var v = AtomicData.unsafe_get(counter);
+		var counter = new AtomicData(0);
+		var length_observer = new Observer(function() {
+			var v = counter.unsafe_get();
 			observer.onNext(v);
 			observer.onCompleted();
 		}, observer.onError, function(v:T) {
-			AtomicData.update(Utils.succ, counter);
+			counter.update(Utils.succ);
 		});
 
 		return _source.subscribe(length_observer);

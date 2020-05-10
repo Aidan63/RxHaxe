@@ -15,7 +15,7 @@ class Collect<T> implements IObservable<Array<T>>
     public function subscribe(_observer : IObserver<Array<T>>) : ISubscription
     {
         final data = [];
-        return source.subscribe(Observer.create(
+        return source.subscribe(new Observer(
             () -> {
                 _observer.onNext(data);
                 _observer.onCompleted();

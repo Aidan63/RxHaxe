@@ -28,10 +28,10 @@ class Average<T : Float & Int> implements IObservable<Float>
 
 	public function subscribe(_observer : IObserver<Float>) : ISubscription
 	{
-		final state    = AtomicData.create({ sum : 0.0, count : 0 });
-		final observer = Observer.create(
+		final state    = new AtomicData({ sum : 0.0, count : 0 });
+		final observer = new Observer(
 			() -> {
-				final s : AverageState = AtomicData.unsafe_get(state);
+				final s : AverageState = state.unsafe_get();
 
 				if (s.count == 0.0)
 				{
@@ -45,12 +45,12 @@ class Average<T : Float & Int> implements IObservable<Float>
 			},
 			_observer.onError,
 			(value : T) -> {
-				AtomicData.update((s : AverageState) -> {
+				state.update((s : AverageState) -> {
 					s.sum   = s.sum + value;
 					s.count = s.count + 1;
 
 					return s;
-				}, state);
+				});
 			});
 
 		return source.subscribe(observer);

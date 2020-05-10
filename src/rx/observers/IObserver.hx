@@ -1,7 +1,8 @@
 package rx.observers;
 
-interface IObserver<T> {
-	public function onCompleted():Void;
-	public function onError(_error:String):Void;
-	public function onNext(_value:T):Void;
+interface IObserver<T>
+{
+	function onCompleted() : Void;
+	function onError(_error : String) : Void;
+	function onNext(_value : T) : Void;
 }

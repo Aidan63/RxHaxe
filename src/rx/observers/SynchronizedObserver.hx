@@ -1,46 +1,45 @@
 package rx.observers;
 
-import rx.Utils;
-import rx.Core.RxObserver;
+using Safety;
+
 import hx.concurrent.lock.RLock;
 
-class SynchronizedObserver<T> implements IObserver<T> {
-	/* Original implementation:
-	 * https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Core/Reactive/Internal/SynchronizedObserver.cs
-	 */
-	var mutex:RLock;
-	var observer:RxObserver<T>;
+@:generic class SynchronizedObserver<T> implements IObserver<T>
+{
+	final mutex : RLock;
+	
+	final onCompletedImpl : () -> Void;
 
-	public function new(?on_completed:Void->Void, ?on_error:String->Void, on_next:T->Void) {
-		mutex = new RLock();
-		observer = {
-			onCompleted: on_completed,
-			onError: on_error,
-			onNext: on_next
-		};
+	final onErrorImpl : (_error : String) -> Void;
+
+	final onNextImpl : (_value : T) -> Void;
+
+	public function new(?_onCompleted : () -> Void, ?_onError : (_error : String) -> Void, ?_onNext : (_value : T) -> Void)
+	{
+		mutex           = new RLock();
+		onCompletedImpl = _onCompleted.or(() -> {});
+		onErrorImpl     = _onError.or(e -> throw e);
+		onNextImpl      = _onNext.or(v -> {});
 	}
 
-	function with_lock<T>(f:T->Void, ?a:T) {
+	public function onError(_error : String)
+	{
 		mutex.acquire();
-		f(a);
+		onErrorImpl(_error);
 		mutex.release();
 	}
 
-	public function onError(e:String) {
-		with_lock(observer.onError, e);
-	}
-
-	public function onNext(x:T) {
-		with_lock(observer.onNext, x);
-	}
-
-	public function onCompleted() {
+	public function onNext(_value : T)
+	{
 		mutex.acquire();
-		observer.onCompleted();
+		onNextImpl(_value);
 		mutex.release();
 	}
 
-	inline static public function create<T>(observer:IObserver<T>) {
-		return new SynchronizedObserver<T>(observer.onCompleted, observer.onError, observer.onNext);
+	public function onCompleted()
+	{
+		mutex.acquire();
+		onCompletedImpl();
+		mutex.release();
 	}
 }

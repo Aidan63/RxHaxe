@@ -21,9 +21,9 @@ class Skip<T> implements IObservable<T> {
 	}
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		var counter = AtomicData.create(0);
-		var drop_observer = Observer.create(observer.onCompleted, observer.onError, function(v:T) {
-			var count = AtomicData.update_and_get(Utils.succ, counter);
+		var counter = new AtomicData(0);
+		var drop_observer = new Observer(observer.onCompleted, observer.onError, function(v:T) {
+			var count = counter.update_and_get(Utils.succ);
 			if (count > n)
 				observer.onNext(v);
 		});

@@ -19,7 +19,7 @@ class Map<T, R> implements IObservable<R> {
 	}
 
 	public function subscribe(observer:IObserver<R>):ISubscription {
-		var map_observer = Observer.create(observer.onCompleted, observer.onError, function(v:T) {
+		var map_observer = new Observer(observer.onCompleted, observer.onError, function(v:T) {
 			observer.onNext(_f(v));
 		});
 		return _source.subscribe(map_observer);

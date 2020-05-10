@@ -15,7 +15,7 @@ class IgnoreElements<T> implements IObservable<T> {
 	}
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		var ignoreElements_observer = Observer.create(function() {
+		var ignoreElements_observer = new Observer(function() {
 			observer.onCompleted();
 		}, function(e:String) {
 			observer.onError(e);

@@ -29,8 +29,8 @@ class Append<T> implements IObservable<T>
 
 	public function subscribe(_observer : IObserver<T>) : ISubscription
 	{
-		final unsubscribe = Composite.create();
-		final observer    = Observer.create(
+		final unsubscribe = new Composite();
+		final observer    = new Observer(
 			() -> unsubscribe.add(source2.subscribe(_observer)),
 			_observer.onError,
 			_observer.onNext);

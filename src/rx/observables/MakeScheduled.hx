@@ -20,10 +20,10 @@ class SubscribeOnThis<T> implements IObservable<T> {
 	}
 
 	function doUnsubscribe()
-		scheduler.schedule_absolute(null, () -> __unsubscribe.unsubscribe());
+		scheduler.scheduleAbsolute(0, () -> __unsubscribe.unsubscribe());
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		scheduler.schedule_absolute(null, () -> __unsubscribe = _source.subscribe(observer));
+		scheduler.scheduleAbsolute(0, () -> __unsubscribe = _source.subscribe(observer));
 
 		return Subscription.create(doUnsubscribe);
 	}
@@ -40,7 +40,7 @@ class SubscribeOfEnum<T> implements IObservable<T> {
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
 		var index:Int = 0;
-		return scheduler.schedule_recursive(function(self:Void->Void) {
+		return scheduler.scheduleRecursive(function(self:Void->Void) {
 			try {
 				if (index >= _enum.length) {
 					observer.onCompleted();
@@ -71,14 +71,14 @@ class SubscribeInterval<T> implements IObservable<T> {
 	}
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		var counter = AtomicData.create(0);
+		var counter = new AtomicData(0);
 		var succ = function(count:Int):Int {
 			// trace(count);
 			observer.onNext(cast count);
 			return count + 1;
 		}
-		return scheduler.schedule_periodically(period, period, function() {
-			AtomicData.update(succ, counter);
+		return scheduler.schedulePeriodically(period, period, function() {
+			counter.update(succ);
 		});
 	}
 }

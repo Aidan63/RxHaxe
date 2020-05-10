@@ -24,9 +24,9 @@ class Delay<T> implements IObservable<T> {
 	}
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		var cancelable = Composite.create();
-		var delay_observer = Observer.create(function() {}, function(error:String) {}, function(notification:Notification<T>) {
-			var d = _scheduler.schedule_absolute(_dueTime, function() {
+		var cancelable = new Composite();
+		var delay_observer = new Observer(function() {}, function(error:String) {}, function(notification:Notification<T>) {
+			var d = _scheduler.scheduleAbsolute(_dueTime, function() {
 				switch (notification) {
 					case OnCompleted:
 						{

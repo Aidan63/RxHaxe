@@ -17,8 +17,8 @@ class Find<T> implements IObservable<T> {
 	}
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		var __subscription = SingleAssignment.create();
-		var find_observer = Observer.create(function() {
+		var __subscription = new SingleAssignment();
+		var find_observer = new Observer(function() {
 			observer.onCompleted();
 		}, function(e:String) {
 			observer.onError(e);

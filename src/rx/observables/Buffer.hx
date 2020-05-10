@@ -20,25 +20,25 @@ class Buffer<T> implements IObservable<Array<T>> {
 
 	public function subscribe(_observer:IObserver<Array<T>>):ISubscription {
 		// lock
-		final state = AtomicData.create({list: []});
-		final buffer_observer = Observer.create(() -> {
+		final state = new AtomicData({list: []});
+		final buffer_observer = new Observer(() -> {
 			// lock
-			AtomicData.update_if((s : BufferState<T>) -> s.list.length > 0, (s : BufferState<T>) -> {
+			state.update_if((s : BufferState<T>) -> s.list.length > 0, (s : BufferState<T>) -> {
 				_observer.onNext(s.list);
 				return s;
-			}, state);
+			});
 			_observer.onCompleted();
 		}, (_error : String) -> {
 				// lock
-				AtomicData.update_if((s : BufferState<T>) -> s.list.length > 0, (s : BufferState<T>) -> {
+				state.update_if((s : BufferState<T>) -> s.list.length > 0, (s : BufferState<T>) -> {
 					_observer.onNext(s.list);
 					return s;
-				}, state);
+				});
 
 				_observer.onError(_error);
 			}, (_value:T) -> {
 				// lock
-				AtomicData.update_if((s : BufferState<T>) -> s.list.length < count, (s : BufferState<T>) -> {
+				state.update_if((s : BufferState<T>) -> s.list.length < count, (s : BufferState<T>) -> {
 					s.list.push(_value);
 
 					if (s.list.length == count) {
@@ -47,7 +47,7 @@ class Buffer<T> implements IObservable<Array<T>> {
 					}
 
 					return s;
-				}, state);
+				});
 			});
 
 		return source.subscribe(buffer_observer);

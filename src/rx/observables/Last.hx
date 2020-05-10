@@ -21,7 +21,7 @@ class Last<T> implements IObservable<T> {
 		var notPublished = true;
 		var lastValue = null;
 
-		final defaultIfEmpty_observer = Observer.create(() -> {
+		final defaultIfEmpty_observer = new Observer(() -> {
 			if (notPublished) {
 				if (defaultValue != null) {
 					observer.onNext(defaultValue);

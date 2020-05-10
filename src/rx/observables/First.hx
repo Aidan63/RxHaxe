@@ -18,7 +18,7 @@ class First<T> implements IObservable<T> {
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
 		var notPublished:Bool = true;
-		var first_observer = Observer.create(function() {
+		var first_observer = new Observer(function() {
 			if (notPublished) {
 				if (_defaultValue != null) {
 					observer.onNext(_defaultValue);

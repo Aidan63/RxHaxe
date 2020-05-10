@@ -17,9 +17,9 @@ class Catch<T> implements IObservable<T> {
 	}
 
 	public function subscribe(_observer:IObserver<T>):ISubscription {
-		var serialDisposable = SerialAssignment.create();
+		var serialDisposable = new SerialAssignment();
 
-		var catch_observer = Observer.create(() -> _observer.onCompleted(), (_error : String) -> {
+		var catch_observer = new Observer(() -> _observer.onCompleted(), (_error : String) -> {
 			var next = errorHandler(_error);
 			serialDisposable.set(next.subscribe(_observer));
 			_observer.onError(_error);

@@ -15,7 +15,7 @@ class Filter<T> implements IObservable<T> {
 	}
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		var filter_observer = Observer.create(() -> observer.onCompleted(), (e : String) -> observer.onError(e), (v:T) -> {
+		var filter_observer = new Observer(() -> observer.onCompleted(), (e : String) -> observer.onError(e), (v:T) -> {
 			var isPassed = false;
 			try {
 				isPassed = predicate(v);

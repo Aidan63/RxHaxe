@@ -25,7 +25,7 @@ class Timestamp<T> implements IObservable<Timestamped<T>>
 
 	public function subscribe(_observer : IObserver<Timestamped<T>>) : ISubscription
 	{
-		final timestamp_observer = Observer.create(
+		final timestamp_observer = new Observer(
 			_observer.onCompleted,
 			_observer.onError,
 			_v -> _observer.onNext(new Timestamped(_v, scheduler.now())));

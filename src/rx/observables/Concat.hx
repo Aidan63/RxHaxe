@@ -19,7 +19,7 @@ class ConcatAppend<T> implements IObservable<T> {
 	}
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		var o1_observer = Observer.create(function() {
+		var o1_observer = new Observer(function() {
 			_unsubscribe.add(_source2.subscribe(observer));
 		}, observer.onError, function(v:T) {
 			observer.onNext(v);
@@ -38,7 +38,7 @@ class Concat<T> implements IObservable<T> {
 	}
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		var __unsubscribe = Composite.create();
+		var __unsubscribe = new Composite();
 		var acc = _source[0];
 		for (i in 1..._source.length) {
 			acc = new ConcatAppend(acc, _source[i], __unsubscribe);

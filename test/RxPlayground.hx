@@ -1,3 +1,4 @@
+import rx.Observer;
 import rx.schedulers.NewThreadScheduler;
 import rx.schedulers.CurrentThreadScheduler;
 import rx.schedulers.ImmediateScheduler;
@@ -21,9 +22,13 @@ class RxPlayground
         // scheduler.scheduleRelative( 5, () -> trace('delayed 4'));
         // scheduler.scheduleRelative( 0, () -> trace('delayed 5'));
 
-        // trace('done');
+        //
 
         var i = 0;
+
+        final obs = new Observer<Bool>();
+        obs.onNext(true);
+        obs.onNext(false);
 
         final scheduler  = new NewThreadScheduler();
         final disposable = scheduler.schedulePeriodically(1, 3, () -> {

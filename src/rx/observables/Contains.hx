@@ -17,27 +17,27 @@ class Contains<T> implements IObservable<Bool> {
 	}
 
 	public function subscribe(observer:IObserver<Bool>):ISubscription {
-		var __subscription = SingleAssignment.create();
-		var state = AtomicData.create(false);
-		var contains_observer = Observer.create(function() {
-			AtomicData.update_if(function(s:Bool) {
+		var __subscription = new SingleAssignment();
+		var state = new AtomicData(false);
+		var contains_observer = new Observer(function() {
+			state.update_if(function(s:Bool) {
 				return s == false;
 			}, function(s:Bool) {
 				observer.onNext(s);
 				return s;
-			}, state);
+			});
 			observer.onCompleted();
 		}, function(e:String) {
 			observer.onError(e);
 		}, function(v:T) {
-			AtomicData.update_if(function(s:Bool) {
+			state.update_if(function(s:Bool) {
 				return s == false && _hasValue(v);
 			}, function(s:Bool) {
 				s = true;
 				observer.onNext(s);
 				__subscription.unsubscribe();
 				return s;
-			}, state);
+			});
 		});
 
 		__subscription.set(_source.subscribe(contains_observer));

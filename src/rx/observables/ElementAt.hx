@@ -18,20 +18,20 @@ class ElementAt<T> implements IObservable<T> {
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
 		// lock
-		var counter = AtomicData.create(0);
-		var __subscription = SingleAssignment.create();
-		var elementAt_observer = Observer.create(function() {
+		var counter = new AtomicData(0);
+		var __subscription = new SingleAssignment();
+		var elementAt_observer = new Observer(function() {
 			observer.onCompleted();
 		}, function(e:String) {
 			observer.onError(e);
 		}, function(value:T) {
-			AtomicData.update_if(function(c:Int) return c == _index, function(c:Int) {
+			counter.update_if(function(c:Int) return c == _index, function(c:Int) {
 				observer.onNext(value);
 				observer.onCompleted();
 				__subscription.unsubscribe();
 				return c;
-			}, counter);
-			AtomicData.update(Utils.succ, counter);
+			});
+			counter.update(Utils.succ);
 		});
 		__subscription.set(_source.subscribe(elementAt_observer));
 		return __subscription;

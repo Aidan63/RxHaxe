@@ -17,7 +17,7 @@ class Dematerialize<T> implements IObservable<T> {
 	}
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		var materialize_observer = Observer.create(null, null, function(v:Notification<T>) {
+		var materialize_observer = new Observer(null, null, function(v:Notification<T>) {
 			switch (v) {
 				case OnCompleted:
 					{

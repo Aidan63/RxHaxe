@@ -2,22 +2,17 @@ package rx.observers;
 
 @:generic class AsyncLockObserver<T> implements IObserver<T>
 {
-	final async_lock : AsyncLock;
+	final asyncLock : AsyncLock;
 
 	final observer : ObserverBase<T>;
 
-	public function new(_observer : IObserver<T>)
+	public function new(_onCompleted : ()->Void, _onError : String->Void, _onNext : T->Void)
 	{
-		async_lock = new AsyncLock();
+		asyncLock = new AsyncLock();
 		observer   = new ObserverBase(
-			() -> with_lock(() -> _observer.onCompleted()),
-			e -> with_lock(() -> _observer.onError(e)),
-			v -> with_lock(() -> _observer.onNext(v)));
-	}
-
-	function with_lock(_func : ()->Void)
-	{
-		async_lock.wait(_func);
+			() -> asyncLock.wait(() -> _onCompleted()),
+			e -> asyncLock.wait(() -> _onError(e)),
+			v -> asyncLock.wait(() -> _onNext(v)));
 	}
 
 	public function onError(_error : String)

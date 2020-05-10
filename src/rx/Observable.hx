@@ -86,7 +86,7 @@ final class Observable<T> implements IObservable<T>
 		return Subscription.empty();
 
 	public static function subscribeFunction<T>(_observable : IObservable<T>, ?_onNext : (_value : T) -> Void, ?_onError : (_error : String) -> Void = null, ?_onComplete : () -> Void = null)
-		return _observable.subscribe(Observer.create(_onComplete, _onError, _onNext));
+		return _observable.subscribe(new Observer(_onComplete, _onError, _onNext));
 
 	static public function empty<T>()
 		return new Empty<T>();
@@ -175,7 +175,7 @@ final class Observable<T> implements IObservable<T>
 		return new Buffer(_observable, _count);
 
 	static public function observer<T>(_observable:IObservable<T>, _fun:T->Void)
-		return _observable.subscribe(Observer.create(null, null, _fun));
+		return _observable.subscribe(new Observer(null, null, _fun));
 
 	static public function amb<T>(_observable1:IObservable<T>, _observable2:IObservable<T>)
 		return new Amb(_observable1, _observable2);

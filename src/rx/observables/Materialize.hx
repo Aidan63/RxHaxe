@@ -21,7 +21,7 @@ class Materialize<T> implements IObservable<Notification<T>>
 
 	public function subscribe(_observer : IObserver<Notification<T>>) : ISubscription
 	{
-		final observer = Observer.create(
+		final observer = new Observer(
 			() -> {
 				_observer.onNext(OnCompleted);
 				_observer.onCompleted();

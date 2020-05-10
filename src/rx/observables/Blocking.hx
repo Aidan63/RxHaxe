@@ -21,7 +21,7 @@ class Blocking<T>
 		mutex = new RLock();
 		queue = [];
 
-		final observer = Observer.create(
+		final observer = new Observer(
 			(n : Notification<T>) -> {
 				mutex.acquire();
 				queue.push(n);

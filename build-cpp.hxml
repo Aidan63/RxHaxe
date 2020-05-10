@@ -1,0 +1,10 @@
+-cp src
+-cp test
+
+-lib haxe-concurrent
+-lib safety
+-lib buddy
+
+--main RxExample
+
+--cpp test/bin/cpp

@@ -23,8 +23,8 @@ class TakeLast<T> implements IObservable<T> {
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
 		var queue = new Array<T>();
-		var __unsubscribe = SingleAssignment.create();
-		var take_last_observer = Observer.create(function() {
+		var __unsubscribe = new SingleAssignment();
+		var take_last_observer = new Observer(function() {
 			try {
 				for (iter in queue) {
 					observer.onNext(iter);

@@ -26,33 +26,33 @@ class CombineLatest<T, R> implements IObservable<R> {
 		for (i in 0..._source.length) {
 			__latest[i] = null;
 		}
-		var state = AtomicData.create({latest: __latest, counter: _source.length});
+		var state = new AtomicData({latest: __latest, counter: _source.length});
 		// lock
 		var on_next = function(i:Int) {
 			return function(v:T) {
-				AtomicData.update(function(s:CombineLatestState<T>) {
+				state.update(function(s:CombineLatestState<T>) {
 					s.latest[i] = v;
 					if (!Lambda.has(s.latest, null)) {
 						observer.onNext(_combinator(s.latest));
 					}
 					return s;
-				}, state);
+				});
 			};
 		};
 		// lock
 		var on_completed = function() {
-			AtomicData.update(function(s:CombineLatestState<T>) {
+			state.update(function(s:CombineLatestState<T>) {
 				s.counter--;
 				if (s.counter == 0) {
 					observer.onCompleted();
 				}
 				return s;
-			}, state);
+			});
 		};
-		var __unsubscribe = Composite.create();
+		var __unsubscribe = new Composite();
 
 		for (i in 0..._source.length) {
-			var combineLatest_observer = Observer.create(on_completed, observer.onError, on_next(i));
+			var combineLatest_observer = new Observer(on_completed, observer.onError, on_next(i));
 			var subscription = _source[i].subscribe(combineLatest_observer);
 			__unsubscribe.add(subscription);
 		}

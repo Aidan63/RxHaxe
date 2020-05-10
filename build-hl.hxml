@@ -5,6 +5,6 @@
 -lib safety
 -lib buddy
 
---main RxPlayground
+--main RxExample
 
---cpp test/bin
+--hl test/bin/hl/test.hl

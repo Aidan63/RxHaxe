@@ -18,7 +18,7 @@ class Distinct<T> implements IObservable<T> {
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
 		var values = new List<T>();
-		var distinct_observer = Observer.create(function() {
+		var distinct_observer = new Observer(function() {
 			observer.onCompleted();
 		}, observer.onError, function(v:T) {
 			var hasValue = Lambda.exists(values, function(x) {

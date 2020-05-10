@@ -18,8 +18,8 @@ class TakeUntil<T> implements IObservable<T> {
 	}
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
-		var otherSubscription = SingleAssignment.create();
-		var other_observer = Observer.create(function() {
+		var otherSubscription = new SingleAssignment();
+		var other_observer = new Observer(function() {
 			observer.onCompleted();
 			otherSubscription.unsubscribe();
 		}, function(e:String) {
@@ -31,7 +31,7 @@ class TakeUntil<T> implements IObservable<T> {
 		});
 
 		otherSubscription.set(_other.subscribe(other_observer));
-		var takeUntil_observer = Observer.create(function() {
+		var takeUntil_observer = new Observer(function() {
 			observer.onCompleted();
 		}, function(e:String) {
 			observer.onError(e);
@@ -39,6 +39,6 @@ class TakeUntil<T> implements IObservable<T> {
 			observer.onNext(v);
 		});
 		var sourceSubscription = _source.subscribe(takeUntil_observer);
-		return Binary.create(sourceSubscription, otherSubscription);
+		return new Binary(sourceSubscription, otherSubscription);
 	}
 }

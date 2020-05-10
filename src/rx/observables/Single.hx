@@ -22,8 +22,8 @@ class Single<T> implements IObservable<T> {
 	public function subscribe(observer:IObserver<T>):ISubscription {
 		var value:Null<T> = null;
 		var has_too_many_elements = false;
-		var __unsubscribe = SingleAssignment.create();
-		var single_observer = Observer.create(function() {
+		var __unsubscribe = new SingleAssignment();
+		var single_observer = new Observer(function() {
 			if (!has_too_many_elements) {
 				if (value == null) {
 					observer.onError("Sequence contains no elements");

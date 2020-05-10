@@ -18,7 +18,7 @@ class DefaultIfEmpty<T> implements IObservable<T> {
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
 		var hasValue:Bool = false;
-		var defaultIfEmpty_observer = Observer.create(function() {
+		var defaultIfEmpty_observer = new Observer(function() {
 			if (!hasValue) {
 				observer.onNext(_defaultValue);
 			}

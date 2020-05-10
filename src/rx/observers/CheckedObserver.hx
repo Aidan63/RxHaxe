@@ -1,74 +1,69 @@
 package rx.observers;
 
-import rx.Utils;
-import rx.Core.RxObserver;
+using Safety;
 
-enum CheckState {
+import rx.Utils;
+
+private enum CheckState {
 	Idle;
 	Busy;
 	Done;
 }
 
-class CheckedObserver<T> implements IObserver<T> {
-	/* In the original implementation, synchronization for the observer state
-	 * is obtained through CAS (compare-and-swap) primitives, but in OCaml we
-	 * don't have a standard/portable CAS primitive, so I'm using a mutex.
-	 * (see https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Core/Reactive/Internal/CheckedObserver.cs)
-	 */
-	var state:AtomicData<CheckState>;
+/* In the original implementation, synchronization for the observer state
+ * is obtained through CAS (compare-and-swap) primitives, but in OCaml we
+ * don't have a standard/portable CAS primitive, so I'm using a mutex.
+ * (see https://rx.codeplex.com/SourceControl/latest#Rx.NET/Source/System.Reactive.Core/Reactive/Internal/CheckedObserver.cs)
+ */
+@:generic class CheckedObserver<T> implements IObserver<T>
+{
+	final state : AtomicData<CheckState>;
 
-	var observer:RxObserver<T>;
+	final onCompletedImpl : () -> Void;
 
-	public function new(?_on_completed:Void->Void, ?_on_error:String->Void, _on_next:T->Void) {
-		state = AtomicData.create(Idle);
-		observer = {
-			onCompleted: _on_completed,
-			onError: _on_error,
-			onNext: _on_next
-		};
+	final onErrorImpl : (_error : String) -> Void;
+
+	final onNextImpl : (_value : T) -> Void;
+
+	public function new(?_onCompleted : () -> Void, ?_onError : (_error : String) -> Void, ?_onNext : (_value : T) -> Void)
+	{
+		state           = new AtomicData(Idle);
+		onCompletedImpl = _onCompleted.or(() -> {});
+		onErrorImpl     = _onError.or(e -> throw e);
+		onNextImpl      = _onNext.or(v -> {});
 	}
 
-	function check_(s:CheckState) {
-		var match = switch (s) {
-			case Idle: return Busy;
-			case Busy: throw "Reentrancy has been detected.";
-			case Done: throw "Observer has already terminated.";
-			// matches anything
-			case _: return null;
-		};
-		return match;
+	public function onError(_error : String)
+	{
+		wrap_action(() -> onErrorImpl(_error), Done);
 	}
 
-	function check_access() {
-		return AtomicData.update(check_, state);
+	public function onNext(_value : T)
+	{
+		wrap_action(() -> onNextImpl(_value), Idle);
 	}
 
-	function wrap_action<T>(thunk:Void->T, new_state:CheckState) {
+	public function onCompleted()
+	{
+		wrap_action(() -> onCompletedImpl(), Done);
+	}
+
+	function check(_state : CheckState)
+	{
+		return switch _state
+		{
+			case Idle : return Busy;
+			case Busy : throw "Reentrancy has been detected.";
+			case Done : throw "Observer has already terminated.";
+		}
+	}
+
+	function check_access() return state.update(check);
+
+	function wrap_action<T>(_func : () -> T, _newState : CheckState)
+	{
 		check_access();
-		Utils.try_finally(thunk, (function() {
-			AtomicData.set(new_state, state);
-		}));
-	}
 
-	public function onError(e:String) {
-		wrap_action((function() {
-			observer.onError(e);
-		}), Done);
-	}
-
-	public function onNext(x:T) {
-		wrap_action((function() {
-			observer.onNext(x);
-		}), Idle);
-	}
-
-	public function onCompleted() {
-		wrap_action((function() {
-			observer.onCompleted();
-		}), Done);
-	}
-
-	inline static public function create<T>(observer:IObserver<T>) {
-		return new CheckedObserver<T>(observer.onCompleted, observer.onError, observer.onNext);
+		Utils.try_finally(_func, () -> state.set(_newState));
 	}
 }

@@ -20,8 +20,8 @@ class SkipUntil<T> implements IObservable<T> {
 	public function subscribe(observer:IObserver<T>):ISubscription {
 		// lock
 		var triggered = false;
-		var otherSubscription = SingleAssignment.create();
-		var other_observer = Observer.create(function() {
+		var otherSubscription = new SingleAssignment();
+		var other_observer = new Observer(function() {
 			triggered = true;
 			otherSubscription.unsubscribe();
 		}, function(e:String) {
@@ -32,7 +32,7 @@ class SkipUntil<T> implements IObservable<T> {
 			otherSubscription.unsubscribe();
 		});
 		otherSubscription.set(_other.subscribe(other_observer));
-		var skipUntil_observer = Observer.create(function() {
+		var skipUntil_observer = new Observer(function() {
 			if (triggered)
 				observer.onCompleted();
 		}, function(e:String) {
@@ -43,6 +43,6 @@ class SkipUntil<T> implements IObservable<T> {
 				observer.onNext(v);
 		});
 		var sourceSubscription = _source.subscribe(skipUntil_observer);
-		return Binary.create(sourceSubscription, otherSubscription);
+		return new Binary(sourceSubscription, otherSubscription);
 	}
 }

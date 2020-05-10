@@ -44,7 +44,7 @@ class DistinctUntilChanged<T> implements IObservable<T> {
 				observer.onNext(value);
 			}
 		};
-		var distinctUntilChanged_observer = Observer.create(observer.onCompleted, observer.onError, onNextWarp);
+		var distinctUntilChanged_observer = new Observer(observer.onCompleted, observer.onError, onNextWarp);
 
 		return _source.subscribe(distinctUntilChanged_observer);
 	}

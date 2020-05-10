@@ -23,29 +23,29 @@ class Take<T> implements IObservable<T> {
 
 	public function subscribe(observer:IObserver<T>):ISubscription {
 		if (n < 1) {
-			var __observer = Observer.create(null, null, function(v) {});
+			var __observer = new Observer<T>(null, null, function(v) {});
 			var __unsubscribe = _source.subscribe(__observer);
 			__unsubscribe.unsubscribe();
 			return Subscription.empty();
 		}
 
-		var counter = AtomicData.create(0);
+		var counter = new AtomicData(0);
 		var error = false;
-		var __unsubscribe = SingleAssignment.create();
+		var __unsubscribe = new SingleAssignment();
 		var on_completed_wrapper = function() {
-			if (!error && AtomicData.get_and_set(n, counter) < n) {
+			if (!error && counter.get_and_set(n) < n) {
 				observer.onCompleted();
 			}
 		}
 		var on_error_wrapper = function(e) {
-			if (!error && AtomicData.get_and_set(n, counter) < n) {
+			if (!error && counter.get_and_set(n) < n) {
 				observer.onError(e);
 			}
 		}
 
-		var take_observer = Observer.create(on_completed_wrapper, on_error_wrapper, function(v) {
+		var take_observer = new Observer(on_completed_wrapper, on_error_wrapper, function(v) {
 			if (!error) {
-				var count = AtomicData.update_and_get(Utils.succ, counter);
+				var count = counter.update_and_get(Utils.succ);
 				if (count <= n) {
 					try {
 						observer.onNext(v);

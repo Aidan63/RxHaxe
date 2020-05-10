@@ -18,10 +18,10 @@ class ObserveOnThis<T> implements IObservable<T>
 
     public function subscribe(_observer : IObserver<T>) : ISubscription
     {
-        return source.subscribe(Observer.create(
-			() -> scheduler.schedule_absolute(null, _observer.onCompleted),
-			(_error) -> scheduler.schedule_absolute(null, _observer.onError.bind(_error)),
-			(_value) -> scheduler.schedule_absolute(null, _observer.onNext.bind(_value))
+        return source.subscribe(new Observer(
+			() -> scheduler.scheduleAbsolute(0, _observer.onCompleted),
+			(_error) -> scheduler.scheduleAbsolute(0, _observer.onError.bind(_error)),
+			(_value) -> scheduler.scheduleAbsolute(0, _observer.onNext.bind(_value))
 		));
     }
 }

@@ -1,21 +1,21 @@
 package rx;
 
-import rx.schedulers.CurrentThread;
-import rx.schedulers.Immediate;
-import rx.schedulers.NewThread;
-import rx.schedulers.Test;
+import rx.schedulers.CurrentThreadScheduler;
+import rx.schedulers.ImmediateScheduler;
+import rx.schedulers.NewThreadScheduler;
+import rx.schedulers.TestScheduler;
 import rx.schedulers.IScheduler;
 
 class Scheduler {
-	public static final currentThread = new CurrentThread();
+	public static final currentThread = new CurrentThreadScheduler();
 
-	public static final newThread = new NewThread();
+	public static final newThread = new NewThreadScheduler();
 
-	public static final immediate = new Immediate();
+	public static final immediate = new ImmediateScheduler();
 
-	public static final test = new Test();
+	public static final test = new TestScheduler();
 
-	public static var timeBasedOperations(get, set):IScheduler;
+	public static var timeBasedOperations (get, set) : IScheduler;
 
 	static var _timeBasedOperations:IScheduler;
 

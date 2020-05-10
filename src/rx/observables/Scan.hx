@@ -23,7 +23,7 @@ class Scan<T, R> implements IObservable<R> {
 	public function subscribe(observer:IObserver<R>):ISubscription {
 		var accumulation:Null<R> = null;
 		var isFirst = true;
-		var scan_observer = Observer.create(observer.onCompleted, observer.onError, function(value:T) {
+		var scan_observer = new Observer(observer.onCompleted, observer.onError, function(value:T) {
 			if (isFirst) {
 				isFirst = false;
 				accumulation = _accumulator(_seed, value);
