@@ -4,11 +4,11 @@ import rx.Observer;
 import rx.observables.IObservable;
 import rx.observables.Single;
 import rx.notifiers.Notification;
-import sys.thread.Mutex;
+import hx.concurrent.lock.RLock;
 
 class Blocking<T>
 {
-	final mutex : Mutex;
+	final mutex : RLock;
 
 	final queue : Array<Notification<T>>;
 
@@ -18,7 +18,7 @@ class Blocking<T>
 
 	public function new(_observable : IObservable<T>)
 	{
-		mutex = new Mutex();
+		mutex = new RLock();
 		queue = [];
 
 		final observer = new Observer(

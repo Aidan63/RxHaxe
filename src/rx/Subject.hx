@@ -20,19 +20,7 @@ import rx.Utils;
 {
 	final observers : AtomicData<Array<IObserver<T>>>;
 
-	static public function create<T>()
-		return new Subject<T>();
-
-	static public function async<T>()
-		return new Async<T>();
-
-	static public function replay<T>()
-		return new Replay<T>();
-
-	static public function behavior<T>(_default_value : T)
-		return new Behavior(_default_value);
-
-	function new()
+	public function new()
 	{
 		observers = new AtomicData<Array<IObserver<T>>>([]);
 	}

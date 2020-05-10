@@ -2,11 +2,11 @@ package rx.observers;
 
 using Safety;
 
-import sys.thread.Mutex;
+import hx.concurrent.lock.RLock;
 
 @:generic class SynchronizedObserver<T> implements IObserver<T>
 {
-	final mutex : Mutex;
+	final mutex : RLock;
 	
 	final onCompletedImpl : () -> Void;
 
@@ -16,7 +16,7 @@ import sys.thread.Mutex;
 
 	public function new(?_onCompleted : () -> Void, ?_onError : (_error : String) -> Void, ?_onNext : (_value : T) -> Void)
 	{
-		mutex           = new Mutex();
+		mutex           = new RLock();
 		onCompletedImpl = _onCompleted.or(() -> {});
 		onErrorImpl     = _onError.or(e -> throw e);
 		onNextImpl      = _onNext.or(v -> {});

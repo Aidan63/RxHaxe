@@ -1,6 +1,6 @@
 package rx;
 
-import sys.thread.Mutex;
+import hx.concurrent.lock.RLock;
 
 /**
  * Object which allows thread safe access and modification to some underlying data.
@@ -21,11 +21,11 @@ import sys.thread.Mutex;
 	/**
 	 * Mutex to prevent simultaneous access from multiple threads.
 	 */
-	final mutex : Mutex;
+	final mutex : RLock;
 
 	public function new(_initialValue : T)
 	{
-		mutex = new Mutex();
+		mutex = new RLock();
 		data  = _initialValue;
 	}
 

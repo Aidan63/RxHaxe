@@ -3,7 +3,6 @@ package rx.schedulers;
 import haxe.Timer;
 import rx.disposables.ISubscription;
 import rx.schedulers.ISchedulerBase.ScheduledWork;
-import sys.thread.Thread;
 
 class NewThreadScheduler extends MakeScheduler
 {
@@ -29,7 +28,7 @@ private class NewThreadBase implements ISchedulerBase
 		final action      = Utils.createSleepingAction(_action, _dueTime, now());
 		final discardable = new DiscardableAction(action);
 #if (target.threaded)
-		Thread.create(discardable.action);
+		sys.thread.Thread.create(discardable.action);
 #else
 		discardable.action();
 #end

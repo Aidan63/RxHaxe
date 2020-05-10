@@ -7,23 +7,28 @@ import rx.notifiers.Notification;
 import rx.Observer;
 import rx.schedulers.IScheduler;
 
-class SubscribeOnThis<T> implements IObservable<T> {
-	final _source:IObservable<T>;
+@:generic class SubscribeOnThis<T> implements IObservable<T>
+{
+	final source : IObservable<T>;
 
-	final scheduler:IScheduler;
+	final scheduler : IScheduler;
 
-	var __unsubscribe:ISubscription;
+	var unsubscribe : ISubscription;
 
-	public function new(scheduler:IScheduler, source:IObservable<T>) {
-		_source = source;
-		this.scheduler = scheduler;
+	public function new(_scheduler : IScheduler, _source : IObservable<T>)
+	{
+		source    = _source;
+		scheduler = _scheduler;
 	}
 
 	function doUnsubscribe()
-		scheduler.scheduleAbsolute(0, () -> __unsubscribe.unsubscribe());
+	{
+		scheduler.scheduleAbsolute(0, () -> unsubscribe.unsubscribe());
+	}
 
-	public function subscribe(observer:IObserver<T>):ISubscription {
-		scheduler.scheduleAbsolute(0, () -> __unsubscribe = _source.subscribe(observer));
+	public function subscribe(_observer : IObserver<T>) : ISubscription
+	{
+		scheduler.scheduleAbsolute(0, () -> unsubscribe = source.subscribe(_observer));
 
 		return Subscription.create(doUnsubscribe);
 	}
