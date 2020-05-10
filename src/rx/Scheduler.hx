@@ -6,7 +6,8 @@ import rx.schedulers.NewThreadScheduler;
 import rx.schedulers.TestScheduler;
 import rx.schedulers.IScheduler;
 
-class Scheduler {
+class Scheduler
+{
 	public static final currentThread = new CurrentThreadScheduler();
 
 	public static final newThread = new NewThreadScheduler();
@@ -17,7 +18,7 @@ class Scheduler {
 
 	public static var timeBasedOperations (get, set) : IScheduler;
 
-	static var _timeBasedOperations:IScheduler;
+	static var _timeBasedOperations : IScheduler;
 
 	inline static function get_timeBasedOperations() {
 		if (_timeBasedOperations == null) {

@@ -5,15 +5,20 @@ import rx.Subscription;
 import rx.observers.IObserver;
 import rx.disposables.ISubscription;
 
-class Utils {
-	static public function try_finally<T>(_func:() -> T, _final:() -> Void):T {
-		try {
+class Utils
+{
+	static public function try_finally<T>(_func : () -> T, _final : () -> Void) : Null<T>
+	{
+		try
+		{
 			final result = _func();
 
 			_final();
 
 			return result;
-		} catch (_error: String) {
+		}
+		catch (_error : String)
+		{
 			_final();
 
 			throw _error;
@@ -22,7 +27,7 @@ class Utils {
 		return null;
 	}
 
-	inline static public function unsubscribe_observer<T>(_observer:IObserver<T>, _observers:Array<IObserver<T>>):Array<IObserver<T>>
+	inline static public function unsubscribe_observer<T>(_observer : IObserver<T>, _observers : Array<IObserver<T>>) : Array<IObserver<T>>
 		return _observers.filter(o -> o != _observer);
 
 	static public function createSleepingAction(_action : () -> Void, _execTime : Float, _now : Float) : () -> ISubscription
