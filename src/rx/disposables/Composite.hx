@@ -17,7 +17,7 @@ class Composite implements ISubscription
 
 	public function new(_subscriptions : Array<ISubscription> = null)
 	{
-		state = new AtomicData({
+		state = new AtomicData<RxCompositeState>({
 			isUnsubscribed : false,
 			subscriptions  : _subscriptions.or([])
 		});

@@ -12,7 +12,7 @@ class AsyncLock
 
 	public function new()
 	{
-		lock = new AtomicData({
+		lock = new AtomicData<RxAsyncLockState>({
 			queue      : new Array<()->Void>(),
 			isAcquired : false,
 			hasFaulted : false

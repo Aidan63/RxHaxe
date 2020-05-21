@@ -17,7 +17,7 @@ class Assignable implements ISubscription
 
 	public function new(_subscription : Null<ISubscription> = null)
 	{
-		state = new AtomicData({
+		state = new AtomicData<RxAssignableState>({
 			isUnsubscribed : false,
 			subscription : _subscription
 		});

@@ -24,11 +24,12 @@ class RxExample {
 		final threadScheduler = new NewThreadScheduler();
 		final mainSheduler    = new SpecificThreadScheduler(Thread.current());
 
+		final threadID = Thread.current();
+		trace('main thread is $threadID');
+
 		// Create an observable which will subscribe (run the function) on a separate thread and observer (call the subscibe function) on the main.
 		Observable.create(_observer -> {
-			trace('performing some long running task on ${Thread.current()}...');
-
-			Sys.sleep(3);
+			trace('performing some long running task on ${ Thread.current() }...${ threadID == Thread.current() }');
 
 			_observer.onNext([Std.random(10), Std.random(10), Std.random(10)]);
 			_observer.onCompleted();
