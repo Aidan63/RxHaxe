@@ -4,13 +4,8 @@ import rx.observables.IObservable;
 import rx.disposables.ISubscription;
 import rx.observers.IObserver;
 import rx.subjects.ISubject;
-import rx.subjects.Async;
-import rx.subjects.Replay;
-import rx.subjects.Behavior;
 import rx.AtomicData;
 import rx.Subscription;
-import rx.Observable;
-import rx.Utils;
 
 /**
  * Implementation based on :
@@ -25,44 +20,49 @@ import rx.Utils;
 		observers = new AtomicData<Array<IObserver<T>>>([]);
 	}
 
-	function update(_func : Array<IObserver<T>>->Array<IObserver<T>>)
-		return observers.update(_func);
-
-	function sync(_func : Array<IObserver<T>>->Array<IObserver<T>>)
-		return observers.synchronize(_func);
-
-	function iter(_func : (_observers : IObserver<T>) -> IObserver<T>)
-		return sync(os -> os.map(_func));
-
 	public function subscribe(_observer : IObserver<T>):ISubscription
 	{
-		update(_obs -> {
-			_obs.push(_observer);
+		observers.update(_array -> {
+			_array.push(_observer);
 
-			return _obs;
+			return _array;
 		});
 
-		return Subscription.create(() -> update(Utils.unsubscribe_observer.bind(_observer)));
+		return Subscription.create(() -> observers.update(_array -> {
+			_array.remove(_observer);
+
+			return _array;
+		}));
 	}
 
 	public function unsubscribe()
-		observers.set([]);
+		observers.update(_array -> {
+			_array.resize(0);
+
+			return _array;
+		});
 
 	public function onCompleted()
-		iter(_observer -> {
-			_observer.onCompleted();
-			return _observer;
-		});
+	{
+		for (observer in observers.unsafe_get())
+		{
+			observer.onCompleted();
+		}
+	}
 
-	public function onError(_e:String)
-		iter(_observer -> {
-			_observer.onError(_e);
-			return _observer;
-		});
+	public function onError(_e : String)
+	{
+		for (observer in observers.unsafe_get())
+		{
+			observer.onError(_e);
+		}
+	}
 
-	public function onNext(_v:T)
-		iter(_observer -> {
-			_observer.onNext(_v);
-			return _observer;
-		});
+	public function onNext(_v : T)
+	{
+		for (observer in observers.unsafe_get())
+		{
+			observer.onNext(_v);
+		}
+	}
 }
